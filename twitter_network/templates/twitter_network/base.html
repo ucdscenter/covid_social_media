@@ -1,0 +1,47 @@
+{% load static %}
+<html>
+    <head>
+        <title>Twitter Networks</title>
+       <link rel="stylesheet" href="/static/twitter_network/css/twitter_networks.css">
+        <link rel="stylesheet" href="/static/twitter_network/css/bootstrap.min.css">
+    </head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="/twitter_network">Twitter Networks</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="/twitter_network">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="show_all_networks">List Networks</a>
+      </li>
+        <li class="nav-item">
+        <a class="nav-link" href="twitter_network_form">Create Network</a>
+      </li>
+  </div>
+</nav>
+
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                {% block content %}
+
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+</body>
+<script src="/static/twitter_network/src/jquery.min.js"></script>
+<script src="/static/twitter_network/src/bootstrap.min.js"></script>
+{% block javascript %}
+{% endblock %}
+{% block network_javascript %}
+{% endblock %}
+</html>

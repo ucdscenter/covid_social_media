@@ -1,0 +1,51 @@
+{% extends 'twitter_network/base.html' %}
+
+{% block content %}
+<h3><span id="identifier">{{ info }}</span> Network</h3>
+	
+
+<div class="row"> 
+	<div class="col-12 align-middle" id="loading-div" align="center" style="height: 100%">
+			<h5><span class="loading-message"></span></h5>	
+			 <img src="/static/twitter_network/images/big-ajax-loader.gif">
+	</div>
+	<div class="col-9 hidden" id="vis-div" >
+		<div id="timeline-div">
+		</div>
+		<div id="timeline-div">
+		</div>
+		<div id="network-div">
+		</div>
+	</div>
+	<div class="col-3 hidden" id="table-div"  style="overflow: auto">
+		<h3 id="tweet-table-label"></h3>
+		<p>popularity = likes + retweets</p>
+		<table class="table tweet-table tinytext">
+			  <thead>
+			    <tr>
+			      <th scope="col">popularity</th>
+			      <th scope="col">user</th>
+			      <th scope="col">Tweet</th>
+			    </tr>
+  				</thead>
+  				<tbody>
+  				</tbody>
+		</table>
+	</div>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+<script src="/static/twitter_network/src/d3.v5.min.js"></script>
+<script src="/static/twitter_network/src/crossfilter.js"></script>
+<script src="/static/twitter_network/src/dc.js"></script>
+
+{% endblock %}
+
+{% block network_javascript %}
+<script src="/static/twitter_network/src/twitter_network_script.js"></script>
+{% endblock %}

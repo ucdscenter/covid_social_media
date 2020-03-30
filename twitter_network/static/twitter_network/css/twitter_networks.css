@@ -1,0 +1,36 @@
+.hidden {
+	display : none;
+}
+.selected_edge {
+  stroke : steelblue;
+  stroke-opacity : 1;
+}
+.deselected_node {
+  opacity : .0;
+}
+.mouseover {
+  position : absolute;
+  background-color: steelblue;
+  width : 200px;
+  z-index : 1000000;
+  font-size: 8px;
+}
+
+.line {
+      fill: none;
+      stroke-width: 1;
+      opacity: .5;
+}
+.highlightedline {
+	  fill: none;
+      stroke-width: 2.5;
+      opacity: 1;
+}
+.tinytext {
+	font-size : 10px;
+}
+
+
+.highlighted_text {
+	font-size : 25px;
+}

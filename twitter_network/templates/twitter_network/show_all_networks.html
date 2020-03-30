@@ -1,0 +1,28 @@
+{% extends 'twitter_network/base.html' %}
+
+{% block content %}
+<h1>All of our networks!</h1>
+<div class="alert alert-warning" role="alert">
+ This is currently non functioning and in development
+</div>
+<div class="row">
+<div class="col-4">
+<table class="table">
+	<tr>
+		<th class="col">Name</th>
+		<th class="col">Status</th>
+		<th class="col">Network PK</th>
+	</tr>
+{% for network in networks %}
+<tr>
+    <td>{{ network.display_name }}</td>
+    <td>{{ network.network_status }}</td>
+    <td><a href="{{ network.pk }}">{{ network.pk }}</a></td>
+</tr>
+{% endfor %}
+
+</table>
+</div>
+
+
+{% endblock %}
