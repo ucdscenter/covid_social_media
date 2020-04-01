@@ -35,7 +35,7 @@ function reformatDate(datestr){
     };
 
 
-async function doData(network_data, dateparser){
+async function doData(network_data, dateparser, identifier){
 	let searchTerms = {
 
   }
@@ -52,7 +52,7 @@ async function doData(network_data, dateparser){
 	})
 
 	
-	let nodeScale = d3.scaleLinear().domain(nodeExt).range([5, 100])
+	let nodeScale = d3.scaleLinear().domain(nodeExt).range([10, 100])
 
 	let topTweets = []
 	let topNtweets = 25
@@ -92,7 +92,10 @@ async function doData(network_data, dateparser){
 	})
 
   //let topNLinks = Math.ceil((network_data.nodes.length - Object.keys(searchTerms).length)/ Object.keys(searchTerms).length);
-  let topNLinks = 50
+  let topNLinks = 20;
+  if (identifier == 'Blevins'){
+    topNLinks = 1000
+  }
   console.log(topNLinks)
 
   network_data.links.forEach(function(d){
@@ -180,7 +183,7 @@ async function doData(network_data, dateparser){
     return d.count;
   })
 
-  let linkScale = d3.scaleLinear().domain(linkExt).range([5, 100])
+  let linkScale = d3.scaleLinear().domain(linkExt).range([10, 150])
 
 
 
@@ -227,7 +230,7 @@ $('.loading-message').text("Loading data...")
 let data = await d3.json("/static/twitter_network/data/" + fname)
 console.log(data)
 $('.loading-message').text("Formatting data...")
-let dataObj = await doData(data, dateParse)
+let dataObj = await doData(data, dateParse, identifier)
 
 $('.loading-message').text("Rendering data...")
 
@@ -399,12 +402,11 @@ const link = linkg
         d3.select(this).attr("stroke-opacity", .05)
       })
       .on("click", function(d){
-
         renderTweetTable(d.top_posts, d.name.replace(":", " and "), searchnodecolor)
       })
 
 link.append("svg:title").text(function(d){
-        return d.name.replace(":", " and ")
+        return d.name.replace(":", " and ") + ": " + d.count;
       })
 
 const node = network_svg.append("g")
@@ -446,7 +448,7 @@ const node = network_svg.append("g")
     		d3.select(".line_" + d.name).remove()
     	}
     	d3.select(this).select("text").style("font-size", function(d){
-    		return Math.max(10, .5 * dataObj.nodeScale(d.count))
+    		return Math.max(20, dataObj.nodeScale(d.count))
     	})
     	d3.select(this).select("circle").style("stroke-width", 1.5)
     	$('.deselected_node').removeClass('deselected_node')
@@ -480,7 +482,7 @@ node.append("text")
     .style("stroke", "white")
     .style("stroke-width", '.5px')
     .style("font-size", function(d){
-    	return Math.max(10, .5 * dataObj.nodeScale(d.count))
+    	return Math.max(20, .5 * dataObj.nodeScale(d.count))
     })
     .style("font-weight", "bold")
     .text(function(d){
@@ -501,7 +503,7 @@ zoomRect.on("click", function(){
   }
   )
 zoomRect.call(zoom)
-    .call(zoom.scaleTo, .2);
+    .call(zoom.scaleTo, .3);
 
 function zoomed() {
 
