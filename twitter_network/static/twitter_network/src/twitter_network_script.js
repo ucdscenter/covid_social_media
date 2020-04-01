@@ -36,7 +36,9 @@ function reformatDate(datestr){
 
 
 async function doData(network_data, dateparser){
-	let searchTerms = []
+	let searchTerms = {
+
+  }
 
 	let totalTime = {
 	}
@@ -48,11 +50,8 @@ async function doData(network_data, dateparser){
 	let nodeExt = d3.extent(network_data.nodes, function(d){
 		return d.count;
 	})
-	let linkExt = d3.extent(network_data.links, function(d){
-		return d.count;
-	})
 
-	let linkScale = d3.scaleLinear().domain(linkExt).range([1, 50])
+	
 	let nodeScale = d3.scaleLinear().domain(nodeExt).range([5, 100])
 
 	let topTweets = []
@@ -60,7 +59,8 @@ async function doData(network_data, dateparser){
 	network_data.nodes.forEach(function(d){
 		d.id = d.name.replace(/ /g, "_")
 		if (d.nodetype == "searchword"){
-			searchTerms.push([d.name, d.count])
+			searchTerms[d.name] = d;
+      d.topLinks = []
 			totalTime[d.name] = d.timeline
 			d.timeline.forEach(function(t){
 				t.date = dateparser(reformatDate(t.date))
@@ -91,14 +91,100 @@ async function doData(network_data, dateparser){
 		}
 	})
 
-	network_data.links = network_data.links.filter(function(d){
-		//console.log(d.source)
-		if (d.count < 10){
+  //let topNLinks = Math.ceil((network_data.nodes.length - Object.keys(searchTerms).length)/ Object.keys(searchTerms).length);
+  let topNLinks = 50
+  console.log(topNLinks)
 
-			return false
-		}
-		return true
+  network_data.links.forEach(function(d){
+    if (searchTerms[d.source] != undefined && searchTerms[d.target] != undefined){
+      //return true
+      var sNode
+      sNode = searchTerms[d.target]
+      if (sNode.topLinks.length < topNLinks){
+          sNode.topLinks.push(d)
+        }
+        sNode.topLinks.sort(function(a, b){
+          return b.count - a.count;
+        })
+      sNode.topLinks = sNode.topLinks.slice(0, topNtweets)
+
+      sNode = searchTerms[d.source]
+      if (sNode.topLinks.length < topNLinks){
+          sNode.topLinks.push(d)
+        }
+        sNode.topLinks.sort(function(a, b){
+          return b.count - a.count;
+        })
+      sNode.topLinks = sNode.topLinks.slice(0, topNtweets)
+
+    }
+    else{
+    var sNode
+    if(searchTerms[d.source] == undefined){
+      sNode=searchTerms[d.target]
+    }
+    else{
+      sNode=searchTerms[d.source]
+    }
+    if (sNode.topLinks.length < topNLinks){
+          sNode.topLinks.push(d)
+        }
+        sNode.topLinks.sort(function(a, b){
+          return b.count - a.count;
+        })
+    sNode.topLinks = sNode.topLinks.slice(0, topNtweets)
+  }
+  })
+	
+
+  network_data.links = network_data.links.filter(function(d){
+    /*if(d.count < 25){
+      return false
+    }
+    return true*/
+    if (searchTerms[d.source] != undefined && searchTerms[d.target] != undefined){
+      //return true
+      var sNode
+      sNode=searchTerms[d.target]
+      let inThere = false
+      sNode.topLinks.forEach(function(l){
+        if (l.name == d.name){
+          inThere = true
+        }
+      })
+      sNode = searchTerms[d.source]
+      sNode.topLinks.forEach(function(l){
+        if (l.name == d.name){
+          inThere = true
+        }
+      })
+      return inThere
+    }
+    var sNode
+    if(searchTerms[d.source] == undefined){
+      sNode=searchTerms[d.target]
+    }
+    else{
+      sNode=searchTerms[d.source]
+    }
+    let inThere = false
+    sNode.topLinks.forEach(function(l){
+      if (l.name == d.name){
+        inThere = true
+      }
+    })
+   return inThere
 	})
+
+  let linkExt = d3.extent(network_data.links, function(d){
+    return d.count;
+  })
+
+  let linkScale = d3.scaleLinear().domain(linkExt).range([5, 100])
+
+
+
+
 	network_data.links.forEach(function(d){
 		d.source = d.source.replace(/ /g, "_")
 		d.target = d.target.replace(/ /g, "_")
@@ -139,8 +225,10 @@ console.log(fname)
 
 $('.loading-message').text("Loading data...")
 let data = await d3.json("/static/twitter_network/data/" + fname)
+console.log(data)
 $('.loading-message').text("Formatting data...")
 let dataObj = await doData(data, dateParse)
+
 $('.loading-message').text("Rendering data...")
 
 console.log(dataObj)
@@ -164,6 +252,10 @@ const padding = {
 let searchnodecolor = "purple"
 let formatter  = d3.format(".3s")  
 let transform = d3.zoomIdentity;
+
+//DO INFO STUFF
+d3.select("#found-count").text(formatter(data.total_found) + " tweets found")
+//END DO INFO STUFF
 
 //ALL THE TIME STUFF
 let time_svg = d3.select("#timeline-div").append("svg").attr("id", "timeline_svg")
@@ -196,12 +288,21 @@ function addToLineG(lineData, linelabel, color){
         return a.date.getTime() - b.date.getTime()
      })
 
-	lineg.append("path").data([sorted])
+	let path = lineg.append("path").data([sorted])
       .classed("line", true)
       .classed("line_" + linelabel, true)
       .style("stroke", color)
       .attr("d", line);
 
+  path.append("svg:title").text(function(d){
+    return linelabel
+  })
+  path.on("mouseover", function(d){
+    d3.select("#id_" + linelabel).dispatch("mouseover")
+  })
+  path.on("mouseout", function(d){
+    d3.select("#id_" + linelabel).dispatch("mouseout")
+  })
 }
 
 Object.keys(dataObj.totalTime).forEach(function(d){
@@ -234,10 +335,15 @@ function renderTweetTable(topTweetData, label="", color="white"){
   	let dtrows = dtbody.selectAll("tr").data(topTweetData).enter().append("tr")
 
   	let dtd = dtrows.selectAll("td").data(function(d,i){
-    		return [d.popularity, d.a_user, d.full_text]
+        let tweettextobj = { "text" : d.full_text}
+    		return [d.popularity, d.a_user, d.date, tweettextobj]
   	}).enter()
   	.append("td").text(function(d){
-    	return d;
+      if (typeof(d) == 'object'){
+        return d.text;
+        d3.select(this).style("font-size", 5)
+      }
+      return d;
   	})
 
   	d3.selectAll("tr").style("border-top", "2.5px solid "  + color)
@@ -254,8 +360,8 @@ let network_svg = d3.select("#network-div")
 
 const simulation = d3.forceSimulation(data.nodes)
       .force("link", d3.forceLink(data.links).id(d => d.id.replace(/ /g, "_"))
-        .distance((d) => 100 )
-        .strength(0.1)
+        .distance((d) => 1/d.count)//dataObj.linkScale(d.count) )
+        .strength((d)=> 1/d.count)
       )
       .force("charge", d3.forceManyBody()
         .strength(-1000)
@@ -272,16 +378,34 @@ const zoomRect = network_svg.append("rect")
     .style("pointer-events", "all")
 
 
-const link = network_svg.append("g")
+const linkg = network_svg.append("g")
     .attr("stroke", "#999")
     .attr("stroke-opacity", 0.05)
+
+const link = linkg
     .selectAll("line")
     .data(data.links)
     .enter().append("line")
       .attr("stroke-width", function(d){
       	return dataObj.linkScale(d.count)
       })
+      .attr("class", function(d){
+        return "link_" + d.source.name.replace(/ /g, "_") + " link_" + d.target.name.replace(/ /g, "_")
+      })
+      .on("mouseover", function(d){
+        d3.select(this).attr("stroke-opacity", 1)
+      })
+      .on("mouseout", function(d){
+        d3.select(this).attr("stroke-opacity", .05)
+      })
+      .on("click", function(d){
 
+        renderTweetTable(d.top_posts, d.name.replace(":", " and "), searchnodecolor)
+      })
+
+link.append("svg:title").text(function(d){
+        return d.name.replace(":", " and ")
+      })
 
 const node = network_svg.append("g")
     .attr("id", 'nodes_outer_g')
@@ -367,7 +491,7 @@ node.append("text")
 
 
 const zoom = d3.zoom()
-      .scaleExtent([.2, 200])
+      .scaleExtent([.05, 200])
       .on("zoom", zoomed);
 
 zoomRect.on("click", function(){
@@ -377,7 +501,7 @@ zoomRect.on("click", function(){
   }
   )
 zoomRect.call(zoom)
-    .call(zoom.scaleTo, .5);
+    .call(zoom.scaleTo, .2);
 
 function zoomed() {
 

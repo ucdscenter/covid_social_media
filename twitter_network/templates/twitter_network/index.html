@@ -5,10 +5,19 @@
 	<div class="col-2"></div>
 	<div class="col-8">
 <h3>Pregenerated Networks</h3>
-<h6><a href="show_network?identifier=Cincytech">view Cincytech test</a></h6>
+<h6><a href="show_network?identifier=Cincitech">view Cincitech test</a></h6>
 <h6><a href="show_network?identifier=Blevins">view Blevins test</a></h6>
 <h6><a href="show_network?identifier=Medicine">view Medical test</a></h6>
-
+<hr>
+<h3>Methods</h3>
+<p>To create the networks, we searched the 66 Million contained in the COVID-19 twitter dataset for the specified search terms. For every search term found in a tweet, we kept track of the other words that co-occurred in that tweet (after removing relatively meaningless stopwords e.g. 'and, the, or etc.'), creating a link between the search term and the word. If that link already occurs, we increment its count. We also keep track of the top tweets (based on popularity (calculated by number of retweets + number of likes)) for every link and every word in this network
+</p>
+<p>
+Once every tweet has been searched, we take the top co-occurring words for each search term, such that the total number of words in the network should be roughly 1000, and visualize them in a node-link structure. For graph readability we remove a few of the less frequent links.
+</p>
+<p>
+Click on a node or a link to see the top tweets that use those words or that pair of words.
+</p>
 <hr>
 <!--
 <h3>Demo App function</h3>
