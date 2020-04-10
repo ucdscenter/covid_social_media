@@ -5,13 +5,16 @@ import datetime
 from .models import TwitterNetwork
 
 from django.urls import reverse
+
+
 # Create your tests here.
 
 
 def create_network():
-	return True
+    return True
+
 
 class TwitterNetworkTest(TestCase):
 
-	def network_was_created(self):
-			self.assertIs(False, False)
+    def network_was_created(self):
+        self.assertIs(False, False)

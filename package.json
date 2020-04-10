@@ -1,0 +1,32 @@
+{
+  "name": "covid_social_media",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "webpack": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ucdscenter/covid_social_media.git"
+  },
+  "author": "Ezra,Suraj",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ucdscenter/covid_social_media/issues"
+  },
+  "homepage": "https://github.com/ucdscenter/covid_social_media#readme",
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "crossfilter": "^1.3.12",
+    "d3": "^5.15.1",
+    "dc": "^4.0.3",
+    "jquery": "^3.5.0",
+    "moment": "^2.24.0",
+    "popper.js": "^1.16.1"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^4.0.1",
+    "webpack": "^2.6.1"
+  }
+}
