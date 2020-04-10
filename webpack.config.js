@@ -18,7 +18,7 @@ module.exports = {
         Assets.js.map(asset => {
           return {
             from: path.resolve(__dirname, `./node_modules/${asset}`),
-            to: path.resolve(__dirname, './twitter_network/static/twitter_network/src')
+            to: path.resolve(__dirname, './twitter_network/static/twitter_network/js')
           };
         })
       ),

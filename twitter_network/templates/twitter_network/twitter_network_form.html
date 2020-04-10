@@ -1,17 +1,31 @@
 {% extends 'twitter_network/base.html' %}
-
 {% block content %}
+  <link rel="stylesheet" href="/static/twitter_network/css/daterangepicker.css">
 <h1>Create a model!</h1>
 <div class="alert alert-warning" role="alert">
  This is currently non functioning and in development
 </div>
 <form action="create_network" method="post">
 {% csrf_token %}
+  <div class="row m-2">
+      <span class="col-md-1">Date Selection :</span>
+      <input class="col-md-2" type="text" name="daterange" value="01/01/2018 - 01/15/2018" />
+  </div>
+  <div class="row m-2">
+    <div class="col">
+      <input type="text" placeholder="Name for Network" name="network_name">
+      <input type="text" placeholder="keywords to search" name="keywords_to_search">
+      <input type="submit" value="Create">
+    </div>
+  </div>
 
-<input type="text" placeholder="Name for Network" name="network_name">
-<input type="text" placeholder="keywords to search" name="keywords_to_search">
-<input type="submit" value="Create">
 </form>
 
 
+{% endblock %}
+
+{% block javascript %}
+<script src="/static/twitter_network/js/moment.min.js"></script>
+<script src="/static/twitter_network/js/daterangepicker.js"></script>
+<script src="/static/twitter_network/src/twitter_network_form.js"></script>
 {% endblock %}
