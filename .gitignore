@@ -4,3 +4,4 @@
 /.idea/*
 /socialmedia_networks/credentials.py
 /twitter_network/static/twitter_network/data/
+/node_modules/
