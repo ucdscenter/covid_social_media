@@ -10,7 +10,7 @@
  	}
  	.obj-mouseover {
       position : absolute;
-      background-color: steelblue;
+      background-color: lightblue;
       width : 100px;
       z-index : 1000000;
       font-size: 8px;
@@ -22,13 +22,14 @@
  </style>
 {% endblock %}
 {% block content %}
-<div class="obj-mouseover">
+<div class="obj-mouseover hidden">
     <p class="name mousep">hi there</p>
     <p class="count mousep">hi there</p>
  </div>
 <h3>
-	<span id="identifier">{{ info }}</span> Graph: <span id="found-count"></span></h3>
-	
+	<span id="identifier">{{ info }}</span> Graph: <span id="found-count"></span>
+</h3>
+<p>Click a bar to see tweets using the found organization</p>	
 
 <div class="row"> 
 	<div class="col-12 align-middle" id="loading-div" align="center" style="height: 100%">

@@ -5,4 +5,5 @@
 /socialmedia_networks/credentials.py
 /twitter_network/static/twitter_network/data/
 /twitter_network/__pycache__/
+/socialmedia_networks/__pycache__/
 /node_modules/
