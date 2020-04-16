@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, redirect
 from django.template import loader
 from django.http import HttpResponse
@@ -45,7 +47,7 @@ def create_network(request):
 
     print(data)
     template = 'twitter_network/create_network_confirm.html'
-    context = {}
+    context = {'data': data}
     print(network_name)
     print(keywords_to_search)
     network = TwitterNetwork(display_name=network_name, search_terms=keywords_to_search, network_status="started")

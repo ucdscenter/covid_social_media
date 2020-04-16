@@ -1,11 +1,16 @@
 {% extends 'twitter_network/base.html' %}
-
+{% load get %}
 {% block content %}
 <div class="alert alert-primary" role="alert">
   Twitter network creation started!
 </div>
 
 <h6><a href="show_all_networks">go back to networks list</a></h6>
-
-
+  {% autoescape on %}
+    {% for record in data.hits.hits %}
+    <tr>
+        <td>{{ record|get:"_source" }}</td>
+    </tr>
+    {% endfor %}
+  {% endautoescape %}
 {% endblock %}
