@@ -51,30 +51,6 @@
 		</div>
 		</div>
 	</div>
-	<!--<div class="col-9 hidden" id="vis-div" >
-		<div id="timeline-div">
-		</div>
-		<div id="timeline-div">
-		</div>
-		<div id="network-div">
-		</div>
-	</div>
-	<div class="col-3 hidden" id="table-div"  style="overflow: auto">
-		<h3 id="tweet-table-label"></h3>
-		<p>popularity = likes + retweets</p>
-		<table class="table tweet-table tinytext">
-			  <thead>
-			    <tr>
-			      <th scope="col">Popularity</th>
-			      <th scope="col">User</th>
-			      <th scope="col">Date</th>
-			      <th scope="col">Tweet</th>
-			    </tr>
-  				</thead>
-  				<tbody>
-  				</tbody>
-		</table>
-	</div>-->
 </div>
 
 
@@ -90,5 +66,6 @@
 {% endblock %}
 
 {% block network_javascript %}
+<script src="/static/twitter_network/src/twitter_network_script.js"></script>
 <script src="/static/twitter_network/src/ner_script.js"></script>
 {% endblock %}
