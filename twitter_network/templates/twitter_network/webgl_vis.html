@@ -1,0 +1,39 @@
+{% extends 'twitter_network/base.html' %}
+{% block extra_style %}
+
+ </style>
+{% endblock %}
+{% block content %}
+<div class="obj-mouseover hidden">
+    <p class="name mousep">hi there</p>
+    <p class="count mousep">hi there</p>
+ </div>
+<h3>
+	<span id="identifier">{{ info }}</span> Webgl Graph: <span id="found-count"></span>
+</h3>
+
+<div class="row"> 
+	<div class="col-12 align-middle" id="loading-div" align="center" style="height: 100%">
+			<h5><span class="loading-message"></span></h5>	
+			 <img src="/static/twitter_network/images/big-ajax-loader.gif">
+	</div>
+	<div class="col-12 hidden" id="vis-div">
+
+	</div>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+<script src="/static/twitter_network/js/d3.min.js"></script>
+<script src="/static/twitter_network/js/crossfilter.js"></script>
+<script src="/static/twitter_network/js/dc.min.js"></script>
+
+{% endblock %}
+
+{% block network_javascript %}
+<script src="/static/twitter_network/src/webgl_script.js"></script>
+{% endblock %}

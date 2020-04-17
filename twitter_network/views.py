@@ -36,6 +36,14 @@ def show_ner(request):
 	context = {'info': identifier}
 	return render(request, template, context)
 
+
+def show_ner(request):
+    template = 'twitter_network/webgl_vis.html'
+    identifier = request.GET.get('identifier')
+    pregenerated = ['']
+    context = {'info': identifier}
+    return render(request, template, context)
+
 def create_network(request):
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
