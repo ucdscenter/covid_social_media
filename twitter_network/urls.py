@@ -11,6 +11,7 @@ urlpatterns = [
     path('create_network', views.create_network),
     path('show_network', views.show_twitter_network),
     path('show_ner', views.show_ner),
-   	path('show_webgl', views.show_webgl)
+   	path('show_webgl', views.show_webgl),
+   	path('get_tweet', views.get_tweet)
 ]
 

@@ -3,9 +3,11 @@ from django.template import loader
 from django.http import HttpResponse
 from elasticsearch import Elasticsearch
 
+
 from socialmedia_networks.credentials import AWS_PROFILE
 from .ESSearch import ESSearch
 from .models import TwitterNetwork
+import json
 
 
 def index(request):
@@ -37,7 +39,7 @@ def show_ner(request):
 	return render(request, template, context)
 
 
-def show_ner(request):
+def show_webgl(request):
     template = 'twitter_network/webgl_vis.html'
     identifier = request.GET.get('identifier')
     pregenerated = ['']
@@ -68,6 +70,24 @@ def create_network(request):
 
     return render(request, template, context)
 
+def get_tweet(request):
+    myEs = ESSearch(AWS_PROFILE)
+    try:
+        tweet_obj = myEs.get_doc(request.GET.get('tweet_id'))
+        ret_obj  ={
+            "user" : tweet_obj["_source"]["user_name"],
+            "text" : tweet_obj["_source"]["text"],
+            "retweets" : tweet_obj["_source"]["retweets"],
+            "date" : tweet_obj["_source"]["date"]
+        }
+    except:
+        ret_obj  ={
+            "user" : "ERROR",
+            "text" : "ELASTICSEARCH OVERLOADED",
+            "retweets" : "-1",
+            "date" : "-1"
+        }
+    return HttpResponse(json.dumps(ret_obj), content_type='application/json')
 
 def twitter_network_form(request):
     template = 'twitter_network/twitter_network_form.html'
