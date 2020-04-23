@@ -11,7 +11,9 @@ async function wrapper(){
 	let data =  await d3.json("/static/twitter_network/data/" + fname)
 	console.log(data)
 
-	
+	let formatter  = d3.format(".3s")  
+
+	d3.select('#found-count').text(formatter(data.data.length))
 
 	var vertices = [];
 	let colors = [];
