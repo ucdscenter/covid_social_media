@@ -46,6 +46,13 @@ def show_webgl(request):
     context = {'info': identifier}
     return render(request, template, context)
 
+def webgl_timeline(request):
+    template = 'twitter_network/webgl_timeline.html'
+    identifier = request.GET.get('identifier')
+    pregenerated = ['']
+    context = {'info': identifier}
+    return render(request, template, context)
+
 def create_network(request):
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
