@@ -6,18 +6,22 @@
  This is currently non functioning and in development
 </div>
 <div class="row">
-<div class="col-4">
+<div class="col-6">
 <table class="table">
 	<tr>
 		<th class="col">Name</th>
-		<th class="col">Status</th>
-		<th class="col">Network PK</th>
+		<th class="col-1">Timeline</th>
+		<th class="col-1">PCA</th>
+		<th class="col-1">Status</th>
 	</tr>
 {% for network in networks %}
 <tr>
-    <td>{{ network.display_name }}</td>
+	<td>{{ network.display_name }}</a></td>
+	<td><a href="webgl_timeline?identifier={{ network.display_name }}_">Timeline </a></td>
+	<td><a href="show_webgl?identifier={{ network.display_name }}_">PCA </a></td>
     <td>{{ network.network_status }}</td>
-    <td><a href="{{ network.pk }}">{{ network.pk }}</a></td>
+
+   
 </tr>
 {% endfor %}
 

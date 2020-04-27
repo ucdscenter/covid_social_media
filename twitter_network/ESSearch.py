@@ -1,4 +1,4 @@
-from django.utils.datetime_safe import datetime
+from datetime import datetime
 from elasticsearch import Elasticsearch as ES, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 
@@ -20,10 +20,10 @@ class ESSearch:
         time_range = {}
         if startDateString:
             startDate = datetime.strptime(startDateString, '%m/%d/%Y')
-            time_range['gte'] = startDate.strftime('%H-%d-%m-%Y')
+            time_range['gte'] = startDate.strftime('00-%d-%m-%Y')
         if endDateString:
             endDate = datetime.strptime(endDateString, '%m/%d/%Y')
-            time_range['lte'] = endDate.strftime('%H-%d-%m-%Y')
+            time_range['lte'] = endDate.strftime('23-%d-%m-%Y')
         if time_range:
             queries.append({
                 'range': {
@@ -32,9 +32,10 @@ class ESSearch:
             })
         if keywords:
             queries.append({
-                "multi_match": {
+                "query_string": {
                     "query": keywords,
-                    "fields": ["location", "mentions", "text"]
+                    "fields" : ["text"],
+                    "default_operator" : "or"
                 }
             })
         if tweettype:
@@ -43,6 +44,7 @@ class ESSearch:
                     "tweet_type" : tweettype,
                 }
                 })
+        print(queries)
         return queries
 
     def get_doc(self, tweet_id):
@@ -60,18 +62,34 @@ class ESSearch:
         if size:
             retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
                 body={'size': size, 'query': {'bool': {'must': queries }}})
+            for tw in retval['hits']['hits']:
+                yield tw
         else:
             retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
                 body={'size': 1000, 'query': {'bool': {'must': queries }}})
-        total = retval["hits"]["total"]
-        sid = retval['_scroll_id']
-        scroll_size = len(retval['hits']['hits'])
-        while scroll_size > 0:
-            print("Scrolling...")
-            for tw in retval['hits']['hits']:
-                yield tw
-            if not size:
-                retval = self.es.scroll(scroll_id=sid, scroll='2m')
-                sid = retval['_scroll_id']
-                scroll_size = len(retval['hits']['hits'])
-        self.es.clear_scroll(scroll_id=sid)
+            total = retval["hits"]["total"]
+            print(total)
+            sid = retval['_scroll_id']
+            scroll_size = len(retval['hits']['hits'])
+            while scroll_size > 0:
+                print("Scrolling...")
+                for tw in retval['hits']['hits']:
+                    yield tw
+                if not size:
+                    retval = self.es.scroll(scroll_id=sid, scroll='1m')
+                    sid = retval['_scroll_id']
+                    scroll_size = len(retval['hits']['hits'])
+            self.es.clear_scroll(scroll_id=sid)
+
+if __name__ == "__main__":
+    from test_credentials import AWS_PROFILE
+    e = ESSearch(AWS_PROFILE)
+    count=0
+    future_of_work_string="employee employees employed employing employ jobless job jobs work working works worked unemployable unemployed wfh"
+    test_string = '"miss rona" AND "boris johnsons"'
+    
+    print(e.count(test_string, tweettype=["original", "quote", "reply"]))
+    for doc in e.query(test_string, tweettype=["original"]):
+        print(doc["_source"])
+        count+=1
+    print(count)
