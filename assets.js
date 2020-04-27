@@ -11,7 +11,8 @@ const JS = [
     'dc/dist/dc.min.js',
     'popper.js/dist/popper.min.js',
     'daterangepicker/daterangepicker.js',
-    'moment/min/moment.min.js'
+    'moment/min/moment.min.js',
+    'three/build/three.min.js'
 ];
 
 module.exports = {'js':JS, 'css':CSS};

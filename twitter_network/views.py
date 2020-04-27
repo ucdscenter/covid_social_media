@@ -3,9 +3,11 @@ from django.template import loader
 from django.http import HttpResponse
 from elasticsearch import Elasticsearch
 
+
 from socialmedia_networks.credentials import AWS_PROFILE
 from .ESSearch import ESSearch
 from .models import TwitterNetwork
+import json
 
 
 def index(request):
@@ -36,30 +38,66 @@ def show_ner(request):
 	context = {'info': identifier}
 	return render(request, template, context)
 
+
+def show_webgl(request):
+    template = 'twitter_network/webgl_vis.html'
+    identifier = request.GET.get('identifier')
+    pregenerated = ['']
+    context = {'info': identifier}
+    return render(request, template, context)
+
+def webgl_timeline(request):
+    template = 'twitter_network/webgl_timeline.html'
+    identifier = request.GET.get('identifier')
+    pregenerated = ['']
+    context = {'info': identifier}
+    return render(request, template, context)
+
 def create_network(request):
+    from .TweetD2vCreator import TweetModelRunner
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
     date_range = request.POST.get('daterange')
 
-    print(date_range)
-    myES = ESSearch(AWS_PROFILE)
-
     if date_range != '':
         dates = date_range.split(' - ')
-        data = myES.query(keywords_to_search, dates[0], dates[1])
+        t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
+        #data = myES.query(keywords_to_search, dates[0], dates[1])
     else:
-        data = myES.query(keywords_to_search);
+        t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
 
-    print(data)
+    t.doc2vec()
+    t.jsonclusterd2vModel(wfile="twitter_network/static/twitter_network/data/"+ network_name +"_data.json")
+    
+        #data = myES.query(keywords_to_search);
+
     template = 'twitter_network/create_network_confirm.html'
     context = {}
     print(network_name)
     print(keywords_to_search)
-    network = TwitterNetwork(display_name=network_name, search_terms=keywords_to_search, network_status="started")
+    network = TwitterNetwork(display_name=network_name, search_terms=keywords_to_search, network_status="complete")
     network.save()
 
     return render(request, template, context)
 
+def get_tweet(request):
+    myEs = ESSearch(AWS_PROFILE)
+    try:
+        tweet_obj = myEs.get_doc(request.GET.get('tweet_id'))
+        ret_obj  ={
+            "user" : tweet_obj["_source"]["user_name"],
+            "text" : tweet_obj["_source"]["text"],
+            "retweets" : tweet_obj["_source"]["retweets"],
+            "date" : tweet_obj["_source"]["date"]
+        }
+    except:
+        ret_obj  ={
+            "user" : "ERROR",
+            "text" : "ELASTICSEARCH OVERLOADED",
+            "retweets" : "-1",
+            "date" : "-1"
+        }
+    return HttpResponse(json.dumps(ret_obj), content_type='application/json')
 
 def twitter_network_form(request):
     template = 'twitter_network/twitter_network_form.html'
