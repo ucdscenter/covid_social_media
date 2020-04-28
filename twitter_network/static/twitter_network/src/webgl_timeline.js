@@ -279,7 +279,6 @@ async function wrapper(){
       	let lineg = spark_svg.append("g").attr('transform', 'translate(' + padding.left + ',' + 0 + ')')
 
 	   function addToLineG(lineData, linelabel, color){
-	   		console.log(lineData)
 			let sorted = lineData.sort(function(a,b){
 		        return a[0].getTime() - b[0].getTime()
 		     })
@@ -305,6 +304,12 @@ async function wrapper(){
 			addToLineG(Object.keys(clustersTimeLines[c]).map(function(t){
 				return [dateParse(t), clustersTimeLines[c][t]]
 			}), "", colorScheme[c])
+		})
+		let clabelIndex= 0 
+		data.centroids.forEach(function(d){
+			console.log(d[1])
+			d3.select(".labels-abs").append("h6").attr("text-align", "center").style("background-color", colorScheme[clabelIndex]).style("font-size", ".7rem").text(d[1])
+			clabelIndex++
 		})
 
 	}//init

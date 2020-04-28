@@ -11,7 +11,15 @@ async function wrapper(){
 	let data =  await d3.json("/static/twitter_network/data/" + fname)
 	console.log(data)
 
-	let formatter  = d3.format(".3s")  
+	let formatter  = d3.format(".3s")
+	let dateParse = d3.timeParse("%H-%d-%m-%Y")
+	let dateFormat = d3.timeFormat("%d-%m-%Y")
+
+	let timeExt = [new Date(),new Date()]
+	timeExt[0].setFullYear(2200)
+	timeExt[1].setFullYear(1900)
+	let timeCountExt = [10000000000000, -1]
+	var timeScale;  
 
 	d3.select('#found-count').text(formatter(data.data.length))
 
@@ -66,6 +74,12 @@ async function wrapper(){
 		let max_pop = -1
 		for ( var i = 0; i < data.data.length; i ++ ){
 			indices[ i ] = i;
+			if (dateParse(data.data[i].d).getTime() < timeExt[0].getTime()){
+				timeExt[0] = dateParse(data.data[i].d)
+			}
+			if (dateParse(data.data[i].d) > timeExt[1].getTime()){
+				timeExt[1] = dateParse(data.data[i].d)
+			}
 			
 			if (parseInt(data.data[i].p) > max_pop){
 				max_pop = parseInt(data.data[i].p)
@@ -164,6 +178,88 @@ async function wrapper(){
 	    //controls.update();
 	    document.getElementById('vis-div').appendChild( renderer.domElement );
 	    document.getElementById('vis-div').addEventListener( 'mousemove', onDocumentMouseMove);
+
+	    	    let padding = {left : 50, right: 10, top: 10, bottom : 10}
+	    
+	    let sparkwidth = 500;
+	    let sparkheight = 100;
+	    let clustersTimeLines = {}
+	    var thingI = 0
+	    let sparkScaleX  = d3.scaleTime().domain(timeExt).range([0, sparkwidth - padding.left - padding.right])
+
+
+	    data.centroids.forEach(function(c){
+	    	clustersTimeLines[thingI]= {}
+	    	thingI++
+	    })
+	    let timeMax = -1
+	    data.data.forEach(function(tw){
+	    	if (clustersTimeLines[tw.c][tw.d] != undefined){
+	    		clustersTimeLines[tw.c][tw.d] += 1
+	    		if (clustersTimeLines[tw.c][tw.d] > timeMax){
+	    			timeMax = clustersTimeLines[tw.c][tw.d]
+	    		}
+	    	}
+	    	else{
+	    		clustersTimeLines[tw.c][tw.d] = 1
+	    	}
+	    })
+	    let y = d3.scaleLinear().domain([timeMax, 0]).range([padding.bottom, sparkheight - (padding.top + padding.bottom)])
+	    let spark_svg = d3.select(".timeline-abs")
+	    				.append("svg")
+	    				.attr('id', "spark-svg")
+	    				.attr("height", sparkheight)
+	    				.attr("width", sparkwidth)
+
+		spark_svg.append("g")
+      .attr("transform", "translate(" + padding.left + "," + (sparkheight  - (padding.top + padding.bottom)) + ")")
+      .attr("class", 'time-x-axis')
+      .call(d3.axisBottom(sparkScaleX).ticks(4));
+      spark_svg.append("g")
+	      .attr("transform", "translate(" + padding.left + "," + 0 + ")")
+	      .attr("class", 'time-y-axis')
+	      .call(d3.axisLeft(y).ticks(4));
+
+	    let line = d3.line()
+      		.x(function(d) { return sparkScaleX(d[0]); })
+      		.y(function(d) { return y(d[1]); })
+      		.curve(d3.curveMonotoneX);
+
+      	let lineg = spark_svg.append("g").attr('transform', 'translate(' + padding.left + ',' + 0 + ')')
+
+	   function addToLineG(lineData, linelabel, color){
+			let sorted = lineData.sort(function(a,b){
+		        return a[0].getTime() - b[0].getTime()
+		     })
+
+			let path = lineg.append("path").data([sorted])
+		      .classed("line", true)
+		      .classed("line_" + linelabel, true)
+		      .style("stroke", color)
+		      .attr("d", line);
+
+		  path.append("svg:title").text(function(d){
+		    return linelabel
+		  })
+		  path.on("mouseover", function(d){
+		    d3.select("#id_" + linelabel).dispatch("mouseover")
+		  })
+		  path.on("mouseout", function(d){
+		    d3.select("#id_" + linelabel).dispatch("mouseout")
+		  })
+		}
+
+		Object.keys(clustersTimeLines).forEach(function(c){
+			addToLineG(Object.keys(clustersTimeLines[c]).map(function(t){
+				return [dateParse(t), clustersTimeLines[c][t]]
+			}), "", colorScheme[c])
+		})
+		let clabelIndex= 0 
+		data.centroids.forEach(function(d){
+			console.log(d[1])
+			d3.select(".labels-abs").append("h6").attr("text-align", "center").style("background-color", colorScheme[clabelIndex]).style("font-size", ".7rem").text(d[1])
+			clabelIndex++
+		})
 	}//init
 
 	function onDocumentMouseMove( event ) {

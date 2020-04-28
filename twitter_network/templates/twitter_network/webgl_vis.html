@@ -18,6 +18,26 @@
     .mousep {
     	margin-bottom:0px;
     }
+
+    .timeline-abs{
+      position : absolute;
+      background-color: white;
+      width : 500px;
+      height : 100px;
+      z-index : 1000000;
+      font-size: 8px;
+      left : 50;
+      top : 50;
+  }
+
+  .labels-abs{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 8px;
+      left : 90;
+      top : 170;
+  }
  </style>
 {% endblock %}
 {% block content %}
@@ -35,7 +55,10 @@
 			 <img src="/static/twitter_network/images/big-ajax-loader.gif">
 	</div>
 	<div class="col-12 hidden" id="vis-div">
-
+    <div class="timeline-abs">
+    </div>
+    <div class="labels-abs">
+    </div>
 	</div>
 </div>
 
