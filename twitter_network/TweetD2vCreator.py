@@ -54,7 +54,7 @@ class TweetModelRunner:
 		for stop in additional_stops:
 			self.stopwords.add(stop)
 		if remove_search_terms is True and search_terms is not None:
-			for term in self.search_terms.split():
+			for term in self.search_terms.lower().translate(str.maketrans('', '', string.punctuation)).split():
 				self.stopwords.add(term)
 		p.set_options(p.OPT.URL, p.OPT.EMOJI, p.OPT.SMILEY, p.OPT.MENTION)
 

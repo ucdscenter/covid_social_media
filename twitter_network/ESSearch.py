@@ -86,10 +86,10 @@ if __name__ == "__main__":
     e = ESSearch(AWS_PROFILE)
     count=0
     future_of_work_string="employee employees employed employing employ jobless job jobs work working works worked unemployable unemployed wfh"
-    test_string = '"miss rona" AND "boris johnsons"'
+    test_string = '"self care"'
     
     print(e.count(test_string, tweettype=["original", "quote", "reply"]))
-    for doc in e.query(test_string, tweettype=["original"]):
-        print(doc["_source"])
-        count+=1
+    #for doc in e.query(test_string, tweettype=["original"]):
+    #    print(doc["_source"])
+    #    count+=1
     print(count)
