@@ -9,22 +9,37 @@
 {% csrf_token %}
   <div class="row m-2">
     <span class="col-md-1">Date Selection :</span>
-    <input class="col-md-2" type="text" name="daterange" value="01/01/2020 - 04/11/2020"/>
+    <input class="col-md-2" type="text" name="daterange" value="01/01/2020 - 05/1/2020" id="dates"/>
   </div>
   <div class="row m-2">
     <div class="col">
       <input type="text" placeholder="Name for Network" name="network_name">
-      <input type="text" placeholder="keywords to search" name="keywords_to_search">
-      <input type="submit" value="Create">
+      <input type="text" placeholder="keywords to search" name="keywords_to_search" id="keywords">
+    </div>
+  </div>
+  <div class="row m-2">
+    <div class="col">
+      <p class="btn btn-secondary" id="query_btn">Get count</p3>
+      <h6>Number of tweets matching query:<span id="query_count">N/A</span></h6>
+    </div>
+    <div class="col-4">
+      
     </div>
   </div>
 
+  <div class="row m-2">
+    <div class="col-2">
+      <input class="btn btn-primary" type="submit" value="Create">
+    </div>
+  </div>
+ 
 </form>
 
 
 {% endblock %}
 
 {% block javascript %}
+<script src="/static/twitter_network/js/d3.min.js"></script>
 <script src="/static/twitter_network/js/moment.min.js"></script>
 <script src="/static/twitter_network/js/daterangepicker.js"></script>
 <script src="/static/twitter_network/src/twitter_network_form.js"></script>

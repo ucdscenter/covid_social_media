@@ -53,12 +53,23 @@ def webgl_timeline(request):
     context = {'info': identifier}
     return render(request, template, context)
 
+def get_query_count(request):
+    keywords_to_search = request.GET.get('keywords_to_search')
+    date_range = request.GET.get('daterange')
+    dates = date_range.split(' - ')
+    e = ESSearch(AWS_PROFILE)
+    count_data = e.count(keywords_to_search, tweettype=["original", "quote", "reply"], startDateString=dates[0], endDateString=dates[1])
+    print(count_data["count"])
+    ret_obj = {"count" : count_data["count"]}
+
+    return HttpResponse(json.dumps(ret_obj), content_type='application/json')
+
 def create_network(request):
     from .TweetD2vCreator import TweetModelRunner
+    
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
     date_range = request.POST.get('daterange')
-
     if date_range != '':
         dates = date_range.split(' - ')
         t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
