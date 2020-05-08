@@ -159,7 +159,7 @@ async function wrapper(){
 	    scene.background = new THREE.Color('white');
 	    camera.lookAt(scene.position);
 	 	scene.add(points);
-	 	loader.load("/static/twitter_network/src/helvetiker.json", function(text){
+	 	/*loader.load("/static/twitter_network/src/helvetiker.json", function(text){
 	 		let cIndex = 0
 	 		data.centroids.forEach(function(c){
 	 			var sphereMat = new THREE.MeshBasicMaterial({
@@ -194,7 +194,7 @@ async function wrapper(){
 	 	
 	 		scene.add(textGroup)
 
-	 	})
+	 	})*/
 	 	
 	 	
 		//scene.add( sphere );
