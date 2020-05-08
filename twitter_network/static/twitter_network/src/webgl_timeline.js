@@ -9,11 +9,31 @@ async function wrapper(){
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "data.json"
 	let data =  await d3.json("/static/twitter_network/data/" + fname)
-	console.log(data)
-
+	
 	let formatter  = d3.format(".3s")  
 	let dateParse = d3.timeParse("%H-%d-%m-%Y")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
+
+
+	data.centroids.forEach(function(c){
+		c.count = 0
+	})
+	
+
+	data.data.forEach(function(d){
+		if(d.c > -1){
+		data.centroids[d.c].count += 1
+		}
+	})
+
+	data.centroids.forEach(function(c){
+		if (c[1].length > 50){
+			c[1] = c[1].slice(0, 50) + "..."
+		}
+		c[1] = c[1] + ":" + formatter(c.count)
+	})
+	console.log(data)
+
 
 	let timeExt = [new Date(),new Date()]
 	timeExt[0].setFullYear(2200)
@@ -26,7 +46,9 @@ async function wrapper(){
 	var vertices = [];
 	let colors = [];
 
-	let colorScheme = d3.schemeTableau10
+	let colorScheme = d3.schemeSet3
+	var circle
+	var sparkScaleX
 	let color = new THREE.Color()
 	let spreadMult = 100
 	var raycaster;
@@ -98,7 +120,12 @@ async function wrapper(){
 			return [x,y,z]
 		}).flat(), 3 ));
 		geometry.setAttribute( 'ca', new THREE.Float32BufferAttribute(data.data.map(function(d){
-			color.setHex("0x" + colorScheme[d.c].slice(1))
+			let thecolor = colorScheme[d.c]
+			if (thecolor == undefined)
+				color.setHex(0xffffff)
+			else{
+				color.setHex("0x" + thecolor.slice(1))
+			}
 			return [color.r, color.g, color.b]
 		}).flat(), 3 ));
 		geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
@@ -236,7 +263,7 @@ async function wrapper(){
 	    let sparkheight = 100;
 	    let clustersTimeLines = {}
 	    var thingI = 0
-	    let sparkScaleX  = d3.scaleTime().domain(timeExt).range([0, sparkwidth - padding.left - padding.right])
+	    sparkScaleX  = d3.scaleTime().domain(timeExt).range([0, sparkwidth - padding.left - padding.right])
 
 
 	    data.centroids.forEach(function(c){
@@ -245,15 +272,17 @@ async function wrapper(){
 	    })
 	    let timeMax = -1
 	    data.data.forEach(function(tw){
-	    	if (clustersTimeLines[tw.c][tw.d] != undefined){
-	    		clustersTimeLines[tw.c][tw.d] += 1
-	    		if (clustersTimeLines[tw.c][tw.d] > timeMax){
-	    			timeMax = clustersTimeLines[tw.c][tw.d]
-	    		}
-	    	}
-	    	else{
-	    		clustersTimeLines[tw.c][tw.d] = 1
-	    	}
+	    	if (tw.c > -1){
+		    	if (clustersTimeLines[tw.c][tw.d] != undefined){
+		    		clustersTimeLines[tw.c][tw.d] += 1
+		    		if (clustersTimeLines[tw.c][tw.d] > timeMax){
+		    			timeMax = clustersTimeLines[tw.c][tw.d]
+		    		}
+		    	}
+		    	else{
+		    		clustersTimeLines[tw.c][tw.d] = 1
+		    	}
+		    }
 	    })
 	    let y = d3.scaleLinear().domain([timeMax, 0]).range([padding.bottom, sparkheight - (padding.top + padding.bottom)])
 	    let spark_svg = d3.select(".timeline-abs")
@@ -277,6 +306,8 @@ async function wrapper(){
       		.curve(d3.curveMonotoneX);
 
       	let lineg = spark_svg.append("g").attr('transform', 'translate(' + padding.left + ',' + 0 + ')')
+
+      	circle = lineg.append("circle").attr("r", 3).attr("cx", 0).attr("cy", sparkheight - (padding.top + padding.bottom))
 
 	   function addToLineG(lineData, linelabel, color){
 			let sorted = lineData.sort(function(a,b){
@@ -303,7 +334,7 @@ async function wrapper(){
 		Object.keys(clustersTimeLines).forEach(function(c){
 			addToLineG(Object.keys(clustersTimeLines[c]).map(function(t){
 				return [dateParse(t), clustersTimeLines[c][t]]
-			}), "", colorScheme[c])
+			}), c, colorScheme[c])
 		})
 		let clabelIndex= 0 
 		data.centroids.forEach(function(d){
@@ -367,10 +398,18 @@ async function wrapper(){
 		}
 		if(fetchdoc){
 			getTweet(data.data[index]);
+			if(data.data[index].c != -1){
+				d3.selectAll('.line').classed("hidden", true)
+				d3.select('.line_' + data.data[index].c).classed("hidden", false)
+				circle.classed("hidden", false).attr("cx", sparkScaleX(dateParse(data.data[index].d)))
+
+			}
 		}
 		else{
 			if(index == undefined){
 				$('.obj-mouseover').addClass('hidden')
+				d3.selectAll('.line').classed("hidden", false)
+				circle.classed("hidden", true)
 			}
 		}
 		points.geometry.attributes.ca.needsUpdate = true
