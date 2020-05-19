@@ -194,6 +194,7 @@ class TweetModelRunner:
 
 if __name__ == "__main__":
 	from test_credentials import AWS_PROFILE
+	import supervised_terms
 	#test_string="employee employees employed employing employ jobless job jobs work working works worked unemployable unemployed wfh"
 	test_string = "emp"
 	t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate="01/01/2020", enddate="04/30/2020", search_terms=test_string)

@@ -85,8 +85,7 @@ if __name__ == "__main__":
     S3_BUCKET = "socialmedia-models"
     s3 = S3Client(AWS_PROFILE, S3_BUCKET)
     #test_str = 'test.json'
-    testdata = {
-        "test" : "test"
-    }
 
-    print(s3.read_fileobj('1k_test_data.json').read())
+    s3.upload('static/twitter_network/data/normal_model_feb_data.json', 'normal_model_feb_data.json')
+    s3.upload('static/twitter_network/data/econ_model_feb_data.json', 'econ_model_feb_data.json')
+    #print(s3.read_fileobj('1k_test_data.json').read())
