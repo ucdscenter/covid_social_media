@@ -70,17 +70,12 @@ def create_network(request):
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
     date_range = request.POST.get('daterange')
-    if date_range != '':
-        dates = date_range.split(' - ')
-        t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
-        #data = myES.query(keywords_to_search, dates[0], dates[1])
-    else:
-        t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
 
+    dates = date_range.split(' - ')
+    t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
     t.doc2vec()
-    t.jsonclusterd2vModel(wfile="twitter_network/static/twitter_network/data/"+ network_name +"_data.json")
+    t.jsonclusterd2vModel(wfile=network_name +"_data.json", write_s3=True)
     
-        #data = myES.query(keywords_to_search);
 
     template = 'twitter_network/create_network_confirm.html'
     context = {}
@@ -90,6 +85,15 @@ def create_network(request):
     network.save()
 
     return render(request, template, context)
+
+def get_network_json(request):
+    from .s3_client import S3Client
+    S3_BUCKET = "socialmedia-models"
+    s3 = S3Client(AWS_PROFILE, S3_BUCKET)
+    fp = request.GET.get('model_json')
+    data_str = s3.read_fileobj(fp).read()
+    
+    return HttpResponse(data_str, content_type='application/json')
 
 def get_tweet(request):
     myEs = ESSearch(AWS_PROFILE)

@@ -8,7 +8,7 @@ async function wrapper(){
 	let width = window.innerWidth;
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "data.json"
-	let data =  await d3.json("/static/twitter_network/data/" + fname)
+	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname)
 	
 	let formatter  = d3.format(".3s")  
 	let dateParse = d3.timeParse("%H-%d-%m-%Y")

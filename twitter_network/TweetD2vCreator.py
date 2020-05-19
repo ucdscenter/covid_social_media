@@ -5,6 +5,7 @@ from gensim.models import FastText
 from gensim.test.utils import get_tmpfile
 from gensim.models import Word2Vec
 from .ESSearch import ESSearch
+from .s3_client import S3Client
 import preprocessor as p
 from .tweet_utils import load_dict_contractions
 
@@ -39,6 +40,7 @@ CONTRACTIONS = load_dict_contractions()
 
 class TweetModelRunner:
 	def __init__(self, startdate=None, enddate=None, tweettype=None, search_terms=None, remove_search_terms=True, size=None, aws_credentials=None):
+		self.creds = aws_credentials
 		self.e = ESSearch(aws_credentials)
 		self.startdate = startdate
 		self.enddate =enddate
@@ -105,7 +107,7 @@ class TweetModelRunner:
 	def most_sims_FT(self, word):
 		print(self.fasttextModel.wv.similar_by_word(word))
 
-	def doc2vec(self, search_terms=None):
+	def doc2vec(self, search_terms=None, save_model=True):
 		from gensim.test.utils import common_texts
 		print(self.tweettype)
 		self.total_count = self.e.count(self.search_terms, tweettype=self.tweettype, startDateString=self.startdate, endDateString=self.enddate)
@@ -117,7 +119,8 @@ class TweetModelRunner:
 		sstring = sstring.replace('"', '*')
 		fname = open('twitter_network/twitter_created_models/' + sstring + "d2v.model", "wb")
 		print(self.d2vmodel)
-		self.d2vmodel.save(fname)
+		if save_model:
+			self.d2vmodel.save(fname)
 
 	def loadd2vModel(self):
 		lstring = self.search_terms + self.startdate.replace('/', '-') if self.startdate is not None else self.search_terms
@@ -126,7 +129,7 @@ class TweetModelRunner:
 		self.d2vmodel = Doc2Vec.load(fstring)
 		print(self.d2vmodel.corpus_count)
 
-	def jsonclusterd2vModel(self, wfile=None):
+	def jsonclusterd2vModel(self, wfile=None, write_s3=True, write_local=False):
 		from sklearn.cluster import AffinityPropagation
 		from sklearn.cluster import KMeans
 		from sklearn.cluster import MiniBatchKMeans
@@ -139,7 +142,7 @@ class TweetModelRunner:
 		import random
 		if self.d2vmodel is None:
 			raise ValueError("Please Initialize d2vmodel!")
-		num_clusters = 8
+		num_clusters = 1
 		kmeans_model = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=250)
 		self.d2vmodel.init_sims(replace=True)
 		X = kmeans_model.fit(self.d2vmodel.docvecs.doctag_syn0)
@@ -150,7 +153,6 @@ class TweetModelRunner:
 		datapoint = pca.transform(self.d2vmodel.docvecs.doctag_syn0)
 
 		if wfile:
-			json_f = open(wfile, "w")
 			json_d = {"data" : [], "centroids" : [], "timeline" : [], "search_terms" : self.search_terms}
 			centroid_labels = []
 			centroids = kmeans_model.cluster_centers_
@@ -179,15 +181,20 @@ class TweetModelRunner:
 					wcounter.update(cleaned_text)
 				centroid_labels.append(",".join(map(lambda x: x[0], wcounter.most_common(5))))
 				json_d["centroids"].append([centroide, centroid_labels[cluster]])
-
 			print(centroid_labels)
-			json.dump(json_d, json_f)
-
-
+			if write_local:
+				pre = "twitter_network/static/twitter_network/data/"
+				json_f = open(pre + wfile, "w")
+				json.dump(json_d, json_f)
+			if write_s3:
+				S3_BUCKET = "socialmedia-models"
+				s3 = S3Client(self.creds, S3_BUCKET)
+				s3.upload_str(json.dumps(json_d), wfile)
 
 
 if __name__ == "__main__":
 	from test_credentials import AWS_PROFILE
+	import supervised_terms
 	#test_string="employee employees employed employing employ jobless job jobs work working works worked unemployable unemployed wfh"
 	test_string = "emp"
 	t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate="01/01/2020", enddate="04/30/2020", search_terms=test_string)
