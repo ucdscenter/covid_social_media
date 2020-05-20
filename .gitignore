@@ -8,7 +8,7 @@
 /twitter_network/test_credentials.py
 /twitter_network/SpecialTermTweetD2vCreator.py
 /twitter_network/supervised_terms.py
-/twitter_network/__pycache__/
-/socialmedia_networks/__pycache__/
-/twitter_network/migrations/__pycache__/
 /node_modules/
+/twitter_network/__pycache__
+/twitter_network/migrations/__pycache__
+/socialmedia_networks/__pycache__
