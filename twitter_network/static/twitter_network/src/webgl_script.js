@@ -9,6 +9,10 @@ async function wrapper(){
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "data.json"
 	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname)
+
+	let selcluster = parseInt(window.location.search.split('cluster=')[1])
+	console.log(selcluster)
+
 	let formatter  = d3.format(".3s")
 	let dateParse = d3.timeParse("%H-%d-%m-%Y")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
@@ -23,6 +27,15 @@ async function wrapper(){
 		data.centroids[d.c].count += 1
 		}
 	})
+
+	if (isNaN(selcluster) == false){
+	data.data = data.data.filter(function(d){
+		if(d.c == selcluster){
+			return true
+		}
+		return false
+	})
+	}
 
 	data.centroids.forEach(function(c){
 		if (c[1].length > 50){
@@ -110,6 +123,7 @@ async function wrapper(){
 
 
 		let sizeScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
+
 
 		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.data.map(function(d){
 			var x = d.l[0] * spreadMult;

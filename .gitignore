@@ -1,5 +1,6 @@
 .DS_Store
-
+__pycache__/
+*.py[cod]
 /venv/
 /.idea/*
 /socialmedia_networks/credentials.py
@@ -8,7 +9,5 @@
 /twitter_network/test_credentials.py
 /twitter_network/SpecialTermTweetD2vCreator.py
 /twitter_network/supervised_terms.py
-/twitter_network/__pycache__/
-/socialmedia_networks/__pycache__/
-/twitter_network/migrations/__pycache__/
+
 /node_modules/

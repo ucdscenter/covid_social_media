@@ -10,6 +10,8 @@ async function wrapper(){
 	let fname = d3.select("#identifier").text() + "data.json"
 	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname)
 	
+	let selcluster = parseInt(window.location.search.split('cluster=')[1])
+	console.log(selcluster)
 	let formatter  = d3.format(".3s")  
 	let dateParse = d3.timeParse("%H-%d-%m-%Y")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
@@ -25,6 +27,14 @@ async function wrapper(){
 		data.centroids[d.c].count += 1
 		}
 	})
+	if (isNaN(selcluster) == false){
+	data.data = data.data.filter(function(d){
+		if(d.c == selcluster){
+			return true
+		}
+		return false
+	})
+	}
 
 	data.centroids.forEach(function(c){
 		if (c[1].length > 50){
@@ -112,10 +122,14 @@ async function wrapper(){
 		spreadMult = (Difference_In_Days / 2) * 10
 		let sizeScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
 		timeScale = d3.scaleTime().range([-spreadMult, spreadMult]).domain(timeExt)
+		let spreadExt = d3.extent(data.data, function(d){
+			return d.l[0]
+		})
+		let spreadScale = d3.scaleLinear().domain(spreadExt).range([0, 100])
 
 		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.data.map(function(d){
 			var x = timeScale(dateParse(d.d));
-			var y = d.l[0] * 100;
+			var y = spreadScale(d.l[0])
 			var z = 0//d.l[2] * spreadMult;
 			return [x,y,z]
 		}).flat(), 3 ));
@@ -285,6 +299,8 @@ async function wrapper(){
 		    }
 	    })
 	    let y = d3.scaleLinear().domain([timeMax, 0]).range([padding.bottom, sparkheight - (padding.top + padding.bottom)])
+
+
 	    let spark_svg = d3.select(".timeline-abs")
 	    				.append("svg")
 	    				.attr('id', "spark-svg")
@@ -338,7 +354,6 @@ async function wrapper(){
 		})
 		let clabelIndex= 0 
 		data.centroids.forEach(function(d){
-			console.log(d[1])
 			d3.select(".labels-abs").append("h6").attr("text-align", "center").style("background-color", colorScheme[clabelIndex]).style("font-size", ".7rem").text(d[1])
 			clabelIndex++
 		})
@@ -435,7 +450,23 @@ async function wrapper(){
 	d3.select("#vis-div").classed("hidden", false)
 
 
-	
+	/*console.log(data)
+	let theclusterid = 2
+	let themaxcount = 100
+	let foundcount = 0
+
+	async function thething(d){
+		if(d.c == theclusterid){
+			foundcount++;
+			if(foundcount < themaxcount){
+				let tweet_data = await d3.json("/twitter_network/get_tweet?tweet_id=" + d.id)
+
+				console.log(tweet_data)
+			}
+		}
+	}
+	data.data.forEach(thething)
+	console.log(foundcount)*/
 	}//wrapper
 
 wrapper();
