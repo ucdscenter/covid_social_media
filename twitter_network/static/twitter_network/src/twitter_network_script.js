@@ -59,6 +59,7 @@ async function doData(network_data, dateparser, identifier){
 	network_data.nodes.forEach(function(d){
 		d.id = d.name.replace(/ /g, "_")
 		if (d.nodetype == "searchword"){
+      console.log(d)
 			searchTerms[d.name] = d;
       d.topLinks = []
 			totalTime[d.name] = d.timeline
@@ -101,6 +102,9 @@ async function doData(network_data, dateparser, identifier){
   network_data.links.forEach(function(d){
     if (searchTerms[d.source] != undefined && searchTerms[d.target] != undefined){
       //return true
+      console.log(d)
+      console.log(searchTerms[d.source])
+      console.log(searchTerms[d.target])
       var sNode
       sNode = searchTerms[d.target]
       if (sNode.topLinks.length < topNLinks){
@@ -122,25 +126,28 @@ async function doData(network_data, dateparser, identifier){
 
     }
     else{
-    var sNode
-    if(searchTerms[d.source] == undefined){
-      sNode=searchTerms[d.target]
+      var sNode
+      if(searchTerms[d.source] == undefined){
+        sNode=searchTerms[d.target]
+      }
+      else{
+        sNode=searchTerms[d.source]
+      }
+      if(sNode != undefined){
+      if (sNode.topLinks.length < topNLinks){
+            sNode.topLinks.push(d)
+          }
+          sNode.topLinks.sort(function(a, b){
+            return b.count - a.count;
+          })
+      sNode.topLinks = sNode.topLinks.slice(0, topNtweets)
     }
-    else{
-      sNode=searchTerms[d.source]
     }
-    if (sNode.topLinks.length < topNLinks){
-          sNode.topLinks.push(d)
-        }
-        sNode.topLinks.sort(function(a, b){
-          return b.count - a.count;
-        })
-    sNode.topLinks = sNode.topLinks.slice(0, topNtweets)
-  }
   })
 	
 
   network_data.links = network_data.links.filter(function(d){
+    return true
     /*if(d.count < 25){
       return false
     }
@@ -163,6 +170,7 @@ async function doData(network_data, dateparser, identifier){
       })
       return inThere
     }
+
     var sNode
     if(searchTerms[d.source] == undefined){
       sNode=searchTerms[d.target]
@@ -191,6 +199,7 @@ async function doData(network_data, dateparser, identifier){
 	network_data.links.forEach(function(d){
 		d.source = d.source.replace(/ /g, "_")
 		d.target = d.target.replace(/ /g, "_")
+    d.name = d.id
 	})
 	let retObj = {
 		"data" : network_data,
