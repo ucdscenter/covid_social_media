@@ -199,7 +199,10 @@ async function doData(network_data, dateparser, identifier){
 	network_data.links.forEach(function(d){
 		d.source = d.source.replace(/ /g, "_")
 		d.target = d.target.replace(/ /g, "_")
-    d.name = d.id
+    if (d.name == undefined){
+       d.name = d.id
+    }
+   
 	})
 	let retObj = {
 		"data" : network_data,
@@ -414,7 +417,8 @@ const link = linkg
         renderTweetTable(d.top_posts, d.name.replace(":", " and "), searchnodecolor)
       })
 
-link.append("svg:title").text(function(d){
+  link.append("svg:title").text(function(d){
+    console.log(d)
         return d.name.replace(":", " and ") + ": " + d.count;
       })
 
