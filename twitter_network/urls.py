@@ -13,6 +13,7 @@ urlpatterns = [
     path('show_ner', views.show_ner),
    	path('show_webgl', views.show_webgl),
    	path('webgl_timeline', views.webgl_timeline),
+    path('webgl_network', views.webgl_network),
     path('get_network_json', views.get_network_json),
    	path('get_tweet', views.get_tweet),
    	path('get_query_count', views.get_query_count)

@@ -3,13 +3,13 @@
   <link rel="stylesheet" href="/static/twitter_network/css/daterangepicker.css">
 <h1>Create a model!</h1>
 <div class="alert alert-warning" role="alert">
- This is currently non functioning and in development
+ This is currently in development
 </div>
 <form action="create_network" method="post">
 {% csrf_token %}
   <div class="row m-2">
-    <span class="col-md-1">Date Selection :</span>
-    <input class="col-md-2" type="text" name="daterange" value="01/01/2020 - 05/1/2020" id="dates"/>
+    <span class="col-md-2">Date Selection :</span>
+    <input class="col-md-2" type="text" name="daterange" value="01/01/2020 - 02/1/2020" id="dates"/>
   </div>
   <div class="row m-2">
     <div class="col">
@@ -26,6 +26,21 @@
       
     </div>
   </div>
+
+
+  <div class="row m-2">
+    <div class="col">
+        <label for="method-select">Choose Visualization Method</label>
+       <select name="method-select" id="method-select">
+         <option value="network">Interaction Network</option>
+         <option value="timeline">Doc2vec Timeline</option>
+       </select>
+    </div>
+    <div class="col-4">
+      
+    </div>
+  </div>
+
 
   <div class="row m-2">
     <div class="col-2">

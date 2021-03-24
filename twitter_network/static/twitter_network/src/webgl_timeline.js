@@ -8,7 +8,7 @@ async function wrapper(){
 	let width = window.innerWidth;
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "data.json"
-	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname)
+	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname )
 	
 	let selcluster = parseInt(window.location.search.split('cluster=')[1])
 	console.log(selcluster)

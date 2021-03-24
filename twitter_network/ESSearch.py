@@ -51,10 +51,27 @@ class ESSearch:
         retval = self.es.get(index=self.es_index, id=tweet_id, doc_type='document')
         return retval
 
-    def count(self, keywords, startDateString=None, endDateString=None, tweettype=None):
-
+    def count(self, keywords, startDateString=None, endDateString=None, tweettype=None, user=False):
         queries = self.format_query(keywords, startDateString, endDateString, tweettype)
-        retval = self.es.count(index=self.es_index, body={ 'query' : {'bool': {'must' : queries}}})
+        total_qry = {}
+        retval = {}
+        if user:
+            total_qry = {"size" : 0,
+                        'query': {'bool': {'must': queries }},
+                        "aggs" : {
+                            "users_count" : {
+                                "cardinality" : {
+                                    "field" : "user_name"
+                                }
+                            }
+                        }}
+            retval = self.es.search(index=self.es_index, doc_type='document', body=total_qry)
+        else:
+            total_qry = { 'query' : {'bool': {'must' : queries}}}
+            retval = self.es.count(index=self.es_index, body=total_qry)
+        return retval
+
+    def agg_qry(self, keywords, startDateString=None, endDateString=None, tweettype=None):
         return retval
 
     def query(self, keywords, startDateString=None, endDateString=None, size=None, tweettype=None):
@@ -81,15 +98,42 @@ class ESSearch:
                     scroll_size = len(retval['hits']['hits'])
             self.es.clear_scroll(scroll_id=sid)
 
+    def sizequery(self, keywords, startDateString=None, endDateString=None, size=None, tweettype=None):
+        queries = self.format_query(keywords, startDateString, endDateString, tweettype)
+        count = 0
+        retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
+            body={'size': 1000, 'query': {'bool': {'must': queries }}})
+        total = retval["hits"]["total"]
+        print(total)
+        sid = retval['_scroll_id']
+        scroll_size = len(retval['hits']['hits'])
+        #count += scroll_size
+        while count < size:
+            print("Scrolling...")
+            for tw in retval['hits']['hits']:
+                yield tw
+            
+            retval = self.es.scroll(scroll_id=sid, scroll='1m')
+            sid = retval['_scroll_id']
+            scroll_size = len(retval['hits']['hits'])
+            count += scroll_size
+        self.es.clear_scroll(scroll_id=sid)
+
 if __name__ == "__main__":
     from test_credentials import AWS_PROFILE
+    import json
     e = ESSearch(AWS_PROFILE)
     count=0
     future_of_work_string="employee employees employed employing employ jobless job jobs work working works worked unemployable unemployed wfh"
     test_string = '"self care"'
-    
-    print(e.count(test_string, tweettype=["original", "quote", "reply"]))
-    #for doc in e.query(test_string, tweettype=["original"]):
-    #    print(doc["_source"])
-    #    count+=1
+    test_string = '"covid"'
+    retarr = []
+    #print(e.count(test_string, tweettype=["original", "quote", "reply"]))
+    for doc in e.sizequery(test_string, tweettype=["original"], size=10000):
+        #print(doc["_source"])
+        retarr.append(doc["_source"])
+        count+=1
+    f = open("lindsay_tweets.json", "w")
+
+    json.dump(retarr, f)
     print(count)

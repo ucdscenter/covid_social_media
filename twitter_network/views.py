@@ -53,6 +53,14 @@ def webgl_timeline(request):
     context = {'info': identifier}
     return render(request, template, context)
 
+def webgl_network(request):
+    template = 'twitter_network/webgl_network.html'
+    identifier = request.GET.get('identifier')
+    print(identifier)
+    pregenerated = ['']
+    context = { 'info' : identifier}
+    return render(request, template, context)
+
 def get_query_count(request):
     keywords_to_search = request.GET.get('keywords_to_search')
     date_range = request.GET.get('daterange')
@@ -66,28 +74,39 @@ def get_query_count(request):
 
 def create_network(request):
     from .TweetD2vCreator import TweetModelRunner
-    
+    from .TweetNetworkCreator import TweetNetworkRunner
+    vis_method = request.POST.get('method-select')
+
     network_name = request.POST.get('network_name')
     keywords_to_search = request.POST.get('keywords_to_search')
     date_range = request.POST.get('daterange')
-
-    dates = date_range.split(' - ')
-    t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
-    t.doc2vec()
-    t.jsonclusterd2vModel(wfile=network_name +"_data.json", write_s3=True)
-    
-
     template = 'twitter_network/create_network_confirm.html'
     context = {}
-    print(network_name)
-    print(keywords_to_search)
-    network = TwitterNetwork(display_name=network_name, search_terms=keywords_to_search, network_status="complete")
-    network.save()
+    dates = date_range.split(' - ')
+    if vis_method == 'timeline':
+        t = TweetModelRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
+        t.doc2vec()
+        t.jsonclusterd2vModel(wfile=network_name +"_data.json", write_s3=True)
+
+        
+        print(network_name)
+        print(keywords_to_search)
+        network = TwitterNetwork(display_name=network_name, search_terms=keywords_to_search, network_status="complete")
+        network.save()
+
+    if vis_method == 'network':
+        t = TweetNetworkRunner(aws_credentials=AWS_PROFILE, tweettype=["original", "quote", "reply"], startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search)
+        t.create_network_data()
 
     return render(request, template, context)
 
 def get_network_json(request):
     from .s3_client import S3Client
+    print(request.GET.get('local'))
+    if request.GET.get('local') == 'true':
+        data_str = open('twitter_network/static/twitter_network/data/' + request.GET.get('model_json'), 'r').read()
+        return HttpResponse(data_str, content_type='application/json')
+
     S3_BUCKET = "socialmedia-models"
     s3 = S3Client(AWS_PROFILE, S3_BUCKET)
     fp = request.GET.get('model_json')
