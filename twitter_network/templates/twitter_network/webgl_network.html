@@ -37,12 +37,54 @@
       left : 90;
       top : 170;
   }
+  .clicked-user-table{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 8px;
+      right : 50;
+      top : 10;
+      width: 250;
+      max-height: 500px;
+      overflow-y: auto
+  }
+  .search-user{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 10;
+  }
+    .links-table-div{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 40;
+      width: 200px;
+      max-height: 200px;
+      overflow-y: auto;
+  }
+
+  .centrality-table-div{
+    position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 100;
+      width: 200px;
+      max-height: 200px;
+      overflow-y: auto;
+  }
  </style>
 {% endblock %}
 {% block content %}
 <div class="obj-mouseover hidden">
-    <p class="name mousep">hi there</p>
-    <p class="count mousep">hi there</p>
+    <p class="name mousep p-1">hi there</p>
+    <p class="count mousep p-1">hi there</p>
  </div>
 <h3>
 	<span id="identifier">{{ info }}</span> network graph: <span id="found-count"></span>
@@ -54,9 +96,22 @@
 			 <img src="/static/twitter_network/images/big-ajax-loader.gif">
 	</div>
 	<div class="col-12 hidden" id="vis-div">
-    <div class="timeline-abs">
+    <div class="timeline-abs hidden">
     </div>
-    <div class="labels-abs">
+    <div class="labels-abs hidden">
+    </div>
+    <div class="search-user">
+       <input placeholder="search for username" type="text" id="user_search">
+    </div>
+    <div class="links-table-div">
+       <p class="empty_label">Linked users: <span id="link-counts"></span><p>
+    </div>
+    <div class="centrality-table-div">
+      <p>Networks' most central nodes<p>
+      <p>User, betweenness, degree<p>
+    </div>
+    <div class="clicked-user-table">
+      <p>User: <span id="user-tweet-selected"></span>: Total tweets <span id="user-tweet-count"></span></p>
     </div>
 
 	</div>

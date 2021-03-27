@@ -35,7 +35,7 @@ class TweetNetworkRunner:
 		self.query_info = None
 		self.test = test
 		self.hashtags = dict()
-
+		self.es_count = 0
 
 		self.verteces_dict = {}
 		self.graph = igraph.Graph()
@@ -45,7 +45,7 @@ class TweetNetworkRunner:
 			for x in self.test:
 				yield x
 		else:
-			for tw in self.e.query(self.search_terms, tweettype=self.tweettype, startDateString=self.startdate, endDateString=self.enddate, size=self.size):
+			for tw in self.e.sizequery(self.search_terms, tweettype=self.tweettype, startDateString=self.startdate, endDateString=self.enddate, size=self.size):
 				yield tw
 
 	def remove_isolates(self):
@@ -62,6 +62,7 @@ class TweetNetworkRunner:
 
 		#creating all the nodes
 		for tw in self.tweetsIter():
+			#print(tw)
 			if dump == True:
 				stored_thing.append(tw)
 			t = tw['_source']
@@ -78,7 +79,7 @@ class TweetNetworkRunner:
 					'c' : 1, 
 					'i' : self.users_count
 				}
-				self.graph.add_vertices(1)
+				
 				self.users_count += 1
 			else:
 				self.verteces_dict[t['user_name']]['p'] = self.verteces_dict[t['user_name']]['p'] + t['retweets'] + t['favorites']
@@ -86,8 +87,9 @@ class TweetNetworkRunner:
 			self.count += 1
 
 
+		self.graph.add_vertices(self.users_count)
 		self.graph.vs['user_name'] = list(self.verteces_dict.keys())
-
+		print("creating links")
 		#creating links
 		for tw in self.tweetsIter():
 			t = tw['_source']
@@ -95,16 +97,41 @@ class TweetNetworkRunner:
 				source_i = self.verteces_dict[t['user_name']]['i']
 				target_i = self.verteces_dict[t['parent_tweet_user']]['i']
 				if source_i != target_i:
-					self.graph.add_edges([(source_i, target_i)])
+					if self.graph.are_connected(source_i, target_i) == False:
+						self.graph.add_edges([(source_i, target_i)])
 
 		delete_ids = [v.index for v in self.graph.vs if v.degree() < 1]
+		highest_degree_ids = []
 		print(len(delete_ids))
 		print(self.graph.vcount())
 		self.graph.delete_vertices(delete_ids)
 		print(self.graph.vcount())
-		#print(self.count)
+		betweenness = self.graph.betweenness()
+		degree = self.graph.vs.degree()
+		betweenness_sorted = sorted(range(len(betweenness)), key=lambda x: betweenness[x], reverse=True)
+		degree_sorted = sorted(range(len(degree)), key=lambda x: degree[x], reverse=True)
+		if len(betweenness_sorted) > 500:
+			betweenness_sorted = betweenness_sorted[0: 500]
+			degree_sorted = degree_sorted[0: 500]
+		
+		centrality_obj = {}
 
-		layout = self.graph.layout("drl")
+		for v in betweenness_sorted:
+			if v not in centrality_obj:
+				centrality_obj[v] = {
+					'b' : betweenness[v],
+					'd' : -1
+				}
+		for v in degree_sorted:
+			if v not in centrality_obj:
+				centrality_obj[v] = {
+					'b' : -1,
+					'd' : degree[v]
+				}
+			else:
+				centrality_obj[v]['d'] = degree[v]
+
+		layout = self.graph.layout_drl(options="coarsest")
 		for i, l in enumerate(layout):
 			user_name = self.graph.vs[i]['user_name']
 			x = round(l[0], 3)
@@ -125,7 +152,8 @@ class TweetNetworkRunner:
 					"start_date" : self.startdate,
 					"end_date" : self.enddate,
 					"timelines" : [],
-					"hashtags" : self.hashtags
+					"hashtags" : self.hashtags,
+					"top_centrality" :  centrality_obj
 		}}
 		def user_to_list(user_dict):
 			return [user_dict['u'], user_dict['p'], user_dict['c'], user_dict['i'], user_dict['x'],

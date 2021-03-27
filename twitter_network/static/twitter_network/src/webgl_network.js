@@ -15,6 +15,11 @@ async function wrapper(){
 	let dateParse = d3.timeParse("%H-%d-%m-%Y")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
 
+	let scoreScale 
+	let popScale 
+	let xScale 
+	let yScale 
+
 	let colorScheme = d3.schemeSet3
 	var circle
 	var sparkScaleX
@@ -34,7 +39,29 @@ async function wrapper(){
 					alphaTest: 0.9
 		} );
 
+
+
 	var points = new THREE.Points( geometry, material );	
+
+	const linegeometry = new THREE.BufferGeometry()
+	const linematerial = new THREE.LineBasicMaterial({
+				color: 0xd3d3d3,
+				linewidth: .01,
+			});
+	const line = new THREE.LineSegments( linegeometry, linematerial );
+	const selpositions = new Float32Array( data.links.length * 3 )
+	/*const selpositions = new Float32Array([1, 1, 1, 1 , 1, 1, 1, 1, 1, 1, 1, 1].map(function(l){
+		return [100 * Math.random(), 100 * Math.random(), -1 ]
+	}).flat())*/
+
+	let sellinegeometry = new THREE.BufferGeometry()
+	sellinegeometry.setAttribute('position', new THREE.BufferAttribute( selpositions, 3 ) )
+	let sellinematerial = new THREE.LineBasicMaterial({
+				color: 0x213FC6 ,
+				linewidth: .01,
+			});
+	let selline = new THREE.LineSegments( sellinegeometry, sellinematerial );
+
  	var camera, scene, renderer;
 	var geometry, material, mesh;
 	var pointGeo
@@ -109,10 +136,10 @@ async function wrapper(){
 		})
 		let spreadScale = d3.scaleLinear().domain(spreadExt).range([0, 100]) 
 		*/
-		let scoreScale = d3.scaleLinear().domain([0, max_score]).range([1, 30])
-		let popScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
-		let xScale = d3.scaleLinear().domain(x_extent).range([-250, 250])
-		let yScale = d3.scaleLinear().domain(y_extent).range([-250, 250])
+		scoreScale = d3.scaleLinear().domain([0, max_score]).range([1, 2])
+		popScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
+		xScale = d3.scaleLinear().domain(x_extent).range([-150, 150])
+		yScale = d3.scaleLinear().domain(y_extent).range([-150, 150])
 
 		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
 			var x = xScale(d[[4]])
@@ -152,7 +179,7 @@ async function wrapper(){
 				Mesh: {},
 				Line: {},
 				LOD: {},
-				Points: { threshold: 2 },
+				Points: { threshold: 1 },
 				Sprite: {}
 			};
 		mouse = new THREE.Vector2();
@@ -163,21 +190,64 @@ async function wrapper(){
 	 	scene.add(points);
 
 
+	 	
+	let line_points = [];
+	data.links.forEach(function(l){
+		line_points.push(xScale(data.nodes[l[0]][4]))
+		line_points.push(yScale(data.nodes[l[0]][5]))
+		line_points.push(-.1)
+		line_points.push(xScale(data.nodes[l[1]][4]))
+		line_points.push(yScale(data.nodes[l[1]][5]))
+		line_points.push(-.1)
+		
+	})
+	const line_vertices = new Float32Array(line_points)
+	
+	linegeometry.setAttribute( 'position', new THREE.BufferAttribute(line_vertices, 3))
+	scene.add(line);
+	scene.add(selline);
+
+	
 	 
-	    renderer = new THREE.WebGLRenderer( { antialias: true } );
-	    renderer.setSize( window.innerWidth - 30, window.innerHeight  - 89);
-	    controls = new THREE.OrbitControls( camera, renderer.domElement );
-	    controls.enableRotate = false
-	    //controls.update();
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setSize( window.innerWidth - 30, window.innerHeight  - 89);
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls.enableRotate = false
 
-	    document.getElementById('vis-div').appendChild( renderer.domElement );
-	    document.getElementById('vis-div').addEventListener( 'mousemove', onDocumentMouseMove);
-
-
-
-	   
+    document.getElementById('vis-div').appendChild( renderer.domElement );
+    document.getElementById('vis-div').addEventListener( 'mousemove', onDocumentMouseMove);
 
 }//init
+
+
+	function createCentralityTable(){
+		let c_objs = []
+		Object.keys(data.info.top_centrality).forEach(function(c){
+			c_objs.push([data.nodes[c][0], data.info.top_centrality[c].b, data.info.top_centrality[c].d, c])
+		})
+		c_objs.sort(function(a,b) {
+			return b[2] - a[2]
+		})
+
+
+		let c_div = d3.select(".centrality-table-div")
+
+		let c_users = c_div.selectAll(".centrality-user")
+				.data(c_objs)
+				.enter()
+				.append("p")
+				.text(function(d){
+					console.log(d)
+					return d[0] + ", " + formatter(d[1]) + ", " + d[2]
+				})
+				.on("click", function(d){
+					index = d[3];
+					console.log(index)
+					highlightUser()
+				})
+		console.log(c_objs)
+	}
+	createCentralityTable()
 
 
 	function onDocumentMouseMove( event ) {
@@ -185,6 +255,160 @@ async function wrapper(){
   		mouse.y = -((event.clientY  - 35) / (window.innerHeight)) * 2 + 1;
   		outermousex = event.clientX;
   		outermousey = event.clientY;
+	}
+
+	async function getUserTweet(tweet_i){
+		let tweetObj = data.nodes[tweet_i]
+		let user_data = await d3.json("/twitter_network/get_user_tweets?usr=" + tweetObj[0] + "&start_d=" + data.info.start_date + "&end_d=" + data.info.end_date + '&qry=' + data.info.terms)
+		console.log(user_data)
+		d3.select("#user-tweet-count").text(user_data.hits.total)
+		d3.select("#user-tweet-selected").text(tweetObj[0])
+		let t = d3.select(".clicked-user-table")
+		user_data.hits.hits.forEach(function(tw){
+			t.append("p")
+			.attr("class", "user-tweet-element")
+			.text("Date: " + tw._source.date + " Text: " + tw._source.text + " Retweets: " + tw._source.retweets)
+			t.append("hr").attr("class", "user-tweet-element")
+		})	
+	}
+
+	async function getTweet(tweetObj){
+
+		$('.obj-mouseover').removeClass('hidden')
+		let mousedata = { left: outermousex + 5, top: outermousey + 20}
+		$('.obj-mouseover').offset(mousedata)
+		//let user_data = await d3.json("/twitter_network/get_user_tweets?usr=" + tweetObj[0] + "&start_d=" + data.info.start_date + "&end_d=" + data.info.end_date + '&qry=' + data.info.terms)
+		//console.log(user_data)
+		$('.obj-mouseover p.name').text("User: " +tweetObj[0])
+		$('.obj-mouseover p.count').text("Number of Tweets: " + tweetObj[2])
+	}
+
+	$('#user_search').on('change', function(e){
+		let user = $('#user_search').val()
+		let nodecount = 0
+		
+		data.nodes.forEach(function(n){
+			if(n[0].toLowerCase() == user.toLowerCase()){
+				index = nodecount;
+				console.log(user)
+				highlightUser()
+				return
+			}
+			nodecount++;
+		})
+
+	})
+	$('canvas').on("click", highlightUser)
+
+
+	function addToLinkTable(the_index){
+		d3.select(".links-table-div").append("a").attr("class", "links-element").text(data.nodes[the_index][0] + " " + data.nodes[the_index][2]).on("click", function(){
+				index = the_index;
+				highlightUser()
+		})
+		d3.select(".links-table-div").append("hr").attr("class", "links-element")
+	}
+
+	function changeNodeColor(the_index, new_color){
+		//console.log(data.nodes[the_index])
+		let saved_color = {}
+		saved_color.r = points.geometry.attributes.ca.array[the_index * 3]
+		saved_color.g = points.geometry.attributes.ca.array[(the_index * 3) + 1]
+		saved_color.b = points.geometry.attributes.ca.array[(the_index * 3) + 2]
+		points.geometry.attributes.ca.array[the_index * 3] = new_color.r
+		points.geometry.attributes.ca.array[(the_index * 3) + 1] = new_color.g
+		points.geometry.attributes.ca.array[(the_index * 3) + 2] = new_color.b
+
+		return saved_color
+	}
+
+	function unlightUser(the_index){
+		line.visible = true
+		$('#user_search').val("")
+		d3.selectAll('.links-element').remove()
+		d3.selectAll(".user-tweet-element").remove()
+		d3.select(".centrality-table-div").classed("hidden", false)
+		selline.visible = false
+		let click_color = { r : color.r, g : color.g, b: color.b}
+		changeNodeColor(the_index, click_color)
+		data.links.forEach(function(l){
+			if(l[0] == the_index){
+				changeNodeColor(l[1], click_color)
+			} 
+			if(l[1] == the_index){
+				changeNodeColor(l[0], click_color)
+			}
+			
+		})
+		/*for (var i=0; i <= pos_index; i++){
+			selline.geometry.attributes.position.array[pos_index++] = 0
+		}
+		return*/
+	}
+	let pos_index = 0
+
+	function lightUser(the_index){
+		console.log(data.nodes[the_index])
+		let selline_points = [];
+		let selected_color = { r : 200, g : 200, b: 8}
+		let click_color = { r : 0, g : 0, b: 206}
+		line.visible = false
+		selline.visible = true
+		let linkfound = 0
+		let link_index = 0
+		pos_index = 0
+
+		changeNodeColor(the_index, click_color)
+		data.links.forEach(function(l){
+			if(l[0] == the_index){
+				changeNodeColor(l[1], click_color)
+				selline.geometry.attributes.position.array[pos_index++] = xScale(data.nodes[l[0]][4])
+				selline.geometry.attributes.position.array[pos_index++] = yScale(data.nodes[l[0]][5])
+				selline.geometry.attributes.position.array[pos_index++] = -.1
+				selline.geometry.attributes.position.array[pos_index++] = xScale(data.nodes[l[1]][4])
+				selline.geometry.attributes.position.array[pos_index++] = yScale(data.nodes[l[1]][5])
+				selline.geometry.attributes.position.array[pos_index++] = -.1
+				linkfound += 1
+				addToLinkTable(l[1])
+
+			} 
+			if(l[1] == the_index){
+				changeNodeColor(l[0], click_color)
+				selline.geometry.attributes.position.array[pos_index++] = xScale(data.nodes[l[0]][4])
+				selline.geometry.attributes.position.array[pos_index++] = yScale(data.nodes[l[0]][5])
+				selline.geometry.attributes.position.array[pos_index++] = -.1
+				selline.geometry.attributes.position.array[pos_index++] = xScale(data.nodes[l[1]][4])
+				selline.geometry.attributes.position.array[pos_index++] = yScale(data.nodes[l[1]][5])
+				selline.geometry.attributes.position.array[pos_index++] = -.1
+				linkfound += 1
+				addToLinkTable(l[0])
+			}
+			link_index += 1
+		})
+		d3.select("#link-counts").text(linkfound)
+		selline.geometry.computeBoundingBox();
+		selline.geometry.computeBoundingSphere();
+		selline.geometry.setDrawRange( 0, linkfound * 2);
+		selline.geometry.attributes.position.needsUpdate = true;
+		points.geometry.attributes.ca.needsUpdate = true;
+		render()
+  		controls.update();
+	}
+	
+	function highlightUser(){
+		unlightUser(clicked_index)
+
+
+		clicked_index = index;
+		if(index != undefined){
+			console.log(clicked_index)
+			$('#user_search').val(data.nodes[clicked_index][0])
+			console.log($('#user_search').val())
+			d3.select(".centrality-table-div").classed("hidden", true)
+			lightUser(clicked_index)
+			getUserTweet(clicked_index)
+		}
+		
 	}
 
  	var intersects
@@ -196,6 +420,7 @@ async function wrapper(){
 	}//animate
 
 	var index = undefined;
+	var clicked_index = undefined;
 	var oldr, oldg, oldb;
 	var fetchdoc
 	function update() {
@@ -203,10 +428,10 @@ async function wrapper(){
 		var intersects = raycaster.intersectObjects( [ points ] );
 		fetchdoc = false
 
-		
 		if (intersects[0] != undefined){
 			//console.log(intersects[0])
 			if (intersects[0].index != index){
+
 				points.geometry.attributes.ca.array[index * 3] = oldr
 				points.geometry.attributes.ca.array[(index * 3) + 1] = oldg
 				points.geometry.attributes.ca.array[(index * 3) + 2] = oldb
@@ -224,23 +449,26 @@ async function wrapper(){
 		}
 		else{
 			if (index != undefined){
+				if(index != clicked_index){
 				points.geometry.attributes.ca.array[index * 3] = oldr
 				points.geometry.attributes.ca.array[(index * 3) + 1] = oldg
 				points.geometry.attributes.ca.array[(index * 3) + 2] = oldb
+				}
 			}
 			index = undefined
+			$('.obj-mouseover').addClass('hidden')
+
 			
 		}
 		if(fetchdoc){
-			/*
 			getTweet(data.nodes[index]);
+			/*
 			if(data.data[index].c != -1){
 				d3.selectAll('.line').classed("hidden", true)
 				d3.select('.line_' + data.data[index].c).classed("hidden", false)
 				circle.classed("hidden", false).attr("cx", sparkScaleX(dateParse(data.data[index].d)))
 
-			}
-			*/
+			}*/
 		}
 		points.geometry.attributes.ca.needsUpdate = true
   		controls.update();
@@ -250,15 +478,6 @@ async function wrapper(){
   		renderer.render(scene, camera);
 	}
 	
-	async function getTweet(tweetObj){
-
-		$('.obj-mouseover').removeClass('hidden')
-		let data = { left: outermousex + 5, top: outermousey + 20}
-		$('.obj-mouseover').offset(data)
-		let tweet_data = await d3.json("/twitter_network/get_tweet?tweet_id=" + tweetObj["id"])
-		$('.obj-mouseover p.name').text(tweet_data.user)
-		$('.obj-mouseover p.count').text(tweet_data.text)
-	}
 
 
 }

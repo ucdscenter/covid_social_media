@@ -16,6 +16,7 @@ urlpatterns = [
     path('webgl_network', views.webgl_network),
     path('get_network_json', views.get_network_json),
    	path('get_tweet', views.get_tweet),
+    path('get_user_tweets', views.get_user_tweets),
    	path('get_query_count', views.get_query_count)
 ]
 

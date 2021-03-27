@@ -11,11 +11,14 @@ class ESSearch:
             http_auth=aws_auth,
             use_ssl=True,
             verify_certs=True,
-            connection_class=RequestsHttpConnection
+            connection_class=RequestsHttpConnection,
+            timeout=60
         )
         self.es_index = es_index
 
-    def format_query(self, keywords, startDateString=None, endDateString=None, tweettype=None):
+    def format_query(self, keywords, startDateString=None, endDateString=None, tweettype=None, user=None):
+        if len(keywords) == 0:
+            keywords=None
         queries = []
         time_range = {}
         if startDateString:
@@ -38,17 +41,31 @@ class ESSearch:
                     "default_operator" : "or"
                 }
             })
+        if user:
+            queries.append({
+                "match": {
+                    "user_name" : user
+                }   
+                })
         if tweettype:
             queries.append({
                 "terms": {
                     "tweet_type" : tweettype,
                 }
-                })
+            })
         print(queries)
         return queries
 
     def get_doc(self, tweet_id):
         retval = self.es.get(index=self.es_index, id=tweet_id, doc_type='document')
+        return retval
+
+
+    def get_user_tweet(self, keywords, startDateString=None, endDateString=None, tweettype=None, user=None):
+        queries = self.format_query(keywords, startDateString=startDateString, endDateString=endDateString, tweettype=tweettype, user=user)
+        total_qry = { "size" : 250, 'query' : {'bool': {'must' : queries
+        }}}
+        retval = self.es.search(index=self.es_index, doc_type='document', body=total_qry)
         return retval
 
     def count(self, keywords, startDateString=None, endDateString=None, tweettype=None, user=False):
@@ -98,9 +115,42 @@ class ESSearch:
                     scroll_size = len(retval['hits']['hits'])
             self.es.clear_scroll(scroll_id=sid)
 
-    def sizequery(self, keywords, startDateString=None, endDateString=None, size=None, tweettype=None):
+    def sizequery(self, keywords, startDateString=None, endDateString=None, size=None, tweettype=None, random=True):
         queries = self.format_query(keywords, startDateString, endDateString, tweettype)
-        count = 0
+        queries = {'bool': {'must': queries }}
+        print(queries)
+        if random:
+            queries = {"function_score": {
+                "query": queries,
+                "random_score": {}, 
+            }}
+        if size < 1000:
+            retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
+                body={'size': size, 'query': queries})
+            for tw in retval['hits']['hits']:
+                yield tw
+        else:
+            retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
+                body={'size': 1000, 'query': queries})
+            total = retval["hits"]["total"]
+            so_far = len(retval['hits']['hits'])
+            if size == None:
+                size = total
+            sid = retval['_scroll_id']
+            scroll_size = len(retval['hits']['hits'])
+            while scroll_size > 0 and so_far <= size:
+                print(so_far)
+                print(size)
+                print(total)
+                print("Scrolling...")
+                for tw in retval['hits']['hits']:
+                    yield tw
+                retval = self.es.scroll(scroll_id=sid, scroll='1m')
+                sid = retval['_scroll_id']
+                scroll_size = len(retval['hits']['hits'])
+                so_far = so_far + scroll_size
+            self.es.clear_scroll(scroll_id=sid)
+        """count = 0
         retval = self.es.search(index=self.es_index, scroll='1m', doc_type='document',
             body={'size': 1000, 'query': {'bool': {'must': queries }}})
         total = retval["hits"]["total"]
@@ -117,7 +167,7 @@ class ESSearch:
             sid = retval['_scroll_id']
             scroll_size = len(retval['hits']['hits'])
             count += scroll_size
-        self.es.clear_scroll(scroll_id=sid)
+        self.es.clear_scroll(scroll_id=sid)"""
 
 if __name__ == "__main__":
     from test_credentials import AWS_PROFILE

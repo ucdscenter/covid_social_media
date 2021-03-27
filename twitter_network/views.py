@@ -114,6 +114,16 @@ def get_network_json(request):
     
     return HttpResponse(data_str, content_type='application/json')
 
+def get_user_tweets(request):
+    myEs = ESSearch(AWS_PROFILE)
+    usr = request.GET.get('usr')
+    start_date = request.GET.get('start_d')
+    end_date = request.GET.get('end_d')
+    query = request.GET.get('qry')
+
+    ret_obj = myEs.get_user_tweet(query, startDateString=start_date, endDateString=end_date, user=usr)
+    return HttpResponse(json.dumps(ret_obj))
+   
 def get_tweet(request):
     myEs = ESSearch(AWS_PROFILE)
     try:
