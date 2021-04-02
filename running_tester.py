@@ -5,18 +5,18 @@ import json
 import igraph
 
 
-DUMP = True
+DUMP = False
 
 
 def test_network_runner(the_request=None):
 
 	dates = ['01/20/2020', '03/21/2020']
 	keywords_to_search = ""
-	#dd = json.load(open("_network_result.json", "r"))
+	dd = json.load(open("_network_result.json", "r"))
 	tweetstype = ["original", "quote", "reply"]
 
-	t = TweetNetworkRunner(aws_credentials=AWS_PROFILE, tweettype=None, startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search, test=None, size=1000000)
-	#dd = t.create_network_data(wfile=keywords_to_search + "_network_result.json")
+	t = TweetNetworkRunner(aws_credentials=AWS_PROFILE, tweettype=None, startdate=dates[0], enddate=dates[1], search_terms=keywords_to_search, test=dd, size=10000)
+	dd = t.create_network_data(wfile=keywords_to_search + "fastgreedy_network_result.json")
 	dd = []
 	if DUMP:
 		for x in t.tweetsIter():

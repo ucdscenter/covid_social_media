@@ -100,16 +100,39 @@ class TweetNetworkRunner:
 					if self.graph.are_connected(source_i, target_i) == False:
 						self.graph.add_edges([(source_i, target_i)])
 
-		delete_ids = [v.index for v in self.graph.vs if v.degree() < 1]
+		delete_ids = [v.index for v in self.graph.vs if v.degree() < 2]
 		highest_degree_ids = []
-		print(len(delete_ids))
 		print(self.graph.vcount())
 		self.graph.delete_vertices(delete_ids)
+
+		delete_ids = [v.index for v in self.graph.vs if v.degree() < 1]
+		self.graph.delete_vertices(delete_ids)
+		print("number retained nodes post link filtering")
 		print(self.graph.vcount())
+		
+		self.graph = self.graph.clusters(mode='weak').giant()
+		print("number retained nodes post giant filtering")
+		print(self.graph.vcount())
+		#c1 = self.graph.community_walktrap()
+		c1 = self.graph.community_fastgreedy()
+		n_clusters = 0
+		#if c1.optimal_count < 10:
+		#	n_clusters = c1.optimal_count
+		#else:
+		n_clusters = 10
+		print("number clusters")
+		print(n_clusters)
+		c1 = c1.as_clustering(n=n_clusters)
+
 		betweenness = self.graph.betweenness()
 		degree = self.graph.vs.degree()
 		betweenness_sorted = sorted(range(len(betweenness)), key=lambda x: betweenness[x], reverse=True)
 		degree_sorted = sorted(range(len(degree)), key=lambda x: degree[x], reverse=True)
+		cluster_sizes = c1.sizes()
+		#print(c1.membership)
+		
+		top_c_indexes = sorted(range(len(cluster_sizes)), key=lambda x: cluster_sizes[x])
+		top_c_indexes = top_c_indexes[-10:]
 		if len(betweenness_sorted) > 500:
 			betweenness_sorted = betweenness_sorted[0: 500]
 			degree_sorted = degree_sorted[0: 500]
@@ -130,8 +153,10 @@ class TweetNetworkRunner:
 				}
 			else:
 				centrality_obj[v]['d'] = degree[v]
-
-		layout = self.graph.layout_drl(options="coarsest")
+		if(self.graph.vcount()) < 10000:
+			layout = self.graph.layout('drl')
+		else:
+			layout = self.graph.layout_drl(options="coarsest")
 		for i, l in enumerate(layout):
 			user_name = self.graph.vs[i]['user_name']
 			x = round(l[0], 3)
@@ -139,25 +164,31 @@ class TweetNetworkRunner:
 			#print(user_name, x, y)
 			self.verteces_dict[user_name]['x'] = x
 			self.verteces_dict[user_name]['y'] = y
+			#self.verteces_dict[user_name]['cc'] = top_c_indexes.index(c1.membership[i]) if c1.membership[i] in top_c_indexes else -1
+			self.verteces_dict[user_name]['cc'] = c1.membership[i]
+			self.verteces_dict[user_name]['i'] = i
 
 	
 		if plot_graph:
-			igraph.plot(self.graph, layout = layout, vertex_size=2, edge_width=1)
+			igraph.plot(self.graph, layout = layout, vertex_size=5, edge_width=1)
 		if dump:
 			return stored_thing
 		json_d = {"nodes" : [], 
-				"links" : [], "info": {
+				"links" : [], 
+				"info": {
 					"model_name" : wfile,
 					"terms" : self.search_terms,
 					"start_date" : self.startdate,
 					"end_date" : self.enddate,
 					"timelines" : [],
 					"hashtags" : self.hashtags,
-					"top_centrality" :  centrality_obj
+					"top_centrality" :  centrality_obj,
+					"query_info" : self.query_info
+
 		}}
 		def user_to_list(user_dict):
 			return [user_dict['u'], user_dict['p'], user_dict['c'], user_dict['i'], user_dict['x'],
-			user_dict['y']]
+			user_dict['y'], user_dict['cc']]
 		for vertex in self.graph.vs:
 			user = vertex["user_name"]
 			json_d["nodes"].append(user_to_list(self.verteces_dict[user]))

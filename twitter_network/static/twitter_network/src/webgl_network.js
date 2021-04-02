@@ -6,6 +6,12 @@ async function wrapper(){
 	let fname = d3.select("#identifier").text() + "_network_result.json"
 	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname + '&local=true')
 	console.log(data)
+	console.log(d3.extent(data.nodes.map(function(d){
+		/*if(d[6] != 0){
+			console.log(d)
+		}*/
+		return d[6]
+	})))
 
 	
 	var vertices = [];
@@ -20,7 +26,8 @@ async function wrapper(){
 	let xScale 
 	let yScale 
 
-	let colorScheme = d3.schemeSet3
+	let colorScheme = d3.schemePaired
+	console.log(colorScheme)
 	var circle
 	var sparkScaleX
 	let color = new THREE.Color()
@@ -45,9 +52,21 @@ async function wrapper(){
 
 	const linegeometry = new THREE.BufferGeometry()
 	const linematerial = new THREE.LineBasicMaterial({
-				color: 0xd3d3d3,
+				color: 0xdfdfdf,
 				linewidth: .01,
 			});
+
+	let c_objs = []
+		Object.keys(data.info.top_centrality).forEach(function(c){
+			c_objs.push([data.nodes[c][0], data.info.top_centrality[c].b, data.info.top_centrality[c].d, c, data.nodes[c][6]])
+		})
+		c_objs.sort(function(a,b) {
+			return b[1] - a[1]
+		})
+
+	let top_100 = -2//c_objs[][1];
+	console.log(top_100)
+
 	const line = new THREE.LineSegments( linegeometry, linematerial );
 	const selpositions = new Float32Array( data.links.length * 3 )
 	/*const selpositions = new Float32Array([1, 1, 1, 1 , 1, 1, 1, 1, 1, 1, 1, 1].map(function(l){
@@ -83,6 +102,9 @@ async function wrapper(){
 
 	d3.select("#loading-div").classed("hidden", true)
 	d3.select("#vis-div").classed("hidden", false)
+
+
+	
 
  
 	function init() {
@@ -136,7 +158,7 @@ async function wrapper(){
 		})
 		let spreadScale = d3.scaleLinear().domain(spreadExt).range([0, 100]) 
 		*/
-		scoreScale = d3.scaleLinear().domain([0, max_score]).range([1, 2])
+		scoreScale = d3.scaleLinear().domain([0, max_score]).range([1, 30])
 		popScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
 		xScale = d3.scaleLinear().domain(x_extent).range([-150, 150])
 		yScale = d3.scaleLinear().domain(y_extent).range([-150, 150])
@@ -148,9 +170,9 @@ async function wrapper(){
 			return [x,y,z]
 		}).flat(), 3 ));
 		geometry.setAttribute( 'ca', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
-			let thecolor = colorScheme[3]
+			let thecolor = colorScheme[d[6]]
 			if (thecolor == undefined)
-				color.setHex(0xffffff)
+				color.setHex(0xff0000)
 			else{
 				color.setHex("0x" + thecolor.slice(1))
 			}
@@ -192,15 +214,36 @@ async function wrapper(){
 
 	 	
 	let line_points = [];
+	let removed_count = 0
+
+	
 	data.links.forEach(function(l){
-		line_points.push(xScale(data.nodes[l[0]][4]))
-		line_points.push(yScale(data.nodes[l[0]][5]))
-		line_points.push(-.1)
-		line_points.push(xScale(data.nodes[l[1]][4]))
-		line_points.push(yScale(data.nodes[l[1]][5]))
-		line_points.push(-.1)
-		
+
+		//if(data.info.top_centrality[l[0]] != undefined && data.info.top_centrality[l[0]].b >= top_100){
+			line_points.push(xScale(data.nodes[l[0]][4]))
+			line_points.push(yScale(data.nodes[l[0]][5]))
+			line_points.push(-.1)
+			line_points.push(xScale(data.nodes[l[1]][4]))
+			line_points.push(yScale(data.nodes[l[1]][5]))
+			line_points.push(-.1)
+		/*}
+		else if(data.info.top_centrality[l[1]] != undefined && data.info.top_centrality[l[1]].b >= top_100){
+			line_points.push(xScale(data.nodes[l[0]][4]))
+			line_points.push(yScale(data.nodes[l[0]][5]))
+			line_points.push(-.1)
+			line_points.push(xScale(data.nodes[l[1]][4]))
+			line_points.push(yScale(data.nodes[l[1]][5]))
+			line_points.push(-.1)
+		}
+		else {
+			removed_count++
+		}
+		*/
 	})
+	console.log(removed_count)
+	console.log(data.links.length)
+	console.log(line_points);
+
 	const line_vertices = new Float32Array(line_points)
 	
 	linegeometry.setAttribute( 'position', new THREE.BufferAttribute(line_vertices, 3))
@@ -221,14 +264,7 @@ async function wrapper(){
 
 
 	function createCentralityTable(){
-		let c_objs = []
-		Object.keys(data.info.top_centrality).forEach(function(c){
-			c_objs.push([data.nodes[c][0], data.info.top_centrality[c].b, data.info.top_centrality[c].d, c])
-		})
-		c_objs.sort(function(a,b) {
-			return b[2] - a[2]
-		})
-
+		
 
 		let c_div = d3.select(".centrality-table-div")
 
@@ -237,8 +273,10 @@ async function wrapper(){
 				.enter()
 				.append("p")
 				.text(function(d){
-					console.log(d)
 					return d[0] + ", " + formatter(d[1]) + ", " + d[2]
+				})
+				.style("background-color", function(d){
+					return colorScheme[d[4]]
 				})
 				.on("click", function(d){
 					index = d[3];
@@ -302,12 +340,72 @@ async function wrapper(){
 
 
 	function addToLinkTable(the_index){
-		d3.select(".links-table-div").append("a").attr("class", "links-element").text(data.nodes[the_index][0] + " " + data.nodes[the_index][2]).on("click", function(){
+
+
+		d3.select(".links-table-div").append("a")
+			.attr("class", "links-element").style("background-color", colorScheme[data.nodes[the_index][6]]).text(data.nodes[the_index][0] + " " + data.nodes[the_index][2])
+			.on("click", function(){
 				index = the_index;
 				highlightUser()
-		})
+			})
 		d3.select(".links-table-div").append("hr").attr("class", "links-element")
 	}
+
+
+	function addHashtagstoTable(){
+		console.log(data.info.hashtags)
+		let tags_limit = 20
+		let top_tags = []
+		let padding = {top : 10, bottom: 10, left : 50, right: 10}
+		let sparkheight = 80
+		let tagpadding = 100
+		let sparkwidth = tags_limit * tagpadding
+		Object.keys(data.info.hashtags).forEach(function(h){
+			top_tags.push([h, data.info.hashtags[h]])
+		})
+		top_tags.sort(function(a,b){
+			return b[1] - a[1];
+		})
+		top_tags = top_tags.slice(0, tags_limit)
+		console.log(top_tags)
+
+		let hashtags_svg = d3.select('.hashtags-table-div').append("svg").attr("id", "hashtags-svg").attr("height", 80).attr("width", sparkwidth)
+
+		let hextent = [0, top_tags[0][1]]
+		var i = -1
+		let htagsscale = d3.scaleBand().domain(top_tags.map(function(h){ return h[0]})).range([0, sparkwidth - padding.left - padding.right])
+		let hheightscale = d3.scaleLinear().domain(hextent).range([sparkheight - (padding.top + padding.bottom), padding.bottom])
+		console.log(htagsscale(top_tags[0][1]))
+
+		hashtags_svg.append("g")
+      		.attr("transform", "translate(" + padding.left + "," + (sparkheight  - (padding.top + padding.bottom)) + ")")
+      		.attr("class", 'hashtag-x-axis')
+      		.call(d3.axisBottom(htagsscale));
+      	hashtags_svg.append("g")
+	      .attr("transform", "translate(" + padding.left + "," + 0 + ")")
+	      .attr("class", 'time-y-axis')
+	      .call(d3.axisLeft(hheightscale).ticks(4));
+
+	    let bars_g = hashtags_svg.append("g")
+	    	.attr('transform', 'translate(' + padding.left + ',' + 0 + ')')
+	    	
+	    bars_g.selectAll(".h-bars")
+	    	.data(top_tags)
+	    	.enter()
+	    	.append("rect").attr("class", "h-bars")
+	    	.attr("x", function(d){
+	    		return htagsscale(d[0])
+	    	})
+	    	.attr("y", function(d){
+	    		return hheightscale(d[1])
+	    	})
+	    	.attr("width", htagsscale.bandwidth() - 15)
+	    	.attr("height", function(d){
+	    		return (sparkheight - padding.top - padding.bottom) - hheightscale(d[1])
+	    	})
+
+	}
+	addHashtagstoTable()
 
 	function changeNodeColor(the_index, new_color){
 		//console.log(data.nodes[the_index])
@@ -329,13 +427,40 @@ async function wrapper(){
 		d3.selectAll(".user-tweet-element").remove()
 		d3.select(".centrality-table-div").classed("hidden", false)
 		selline.visible = false
+		var old_color;
 		let click_color = { r : color.r, g : color.g, b: color.b}
+		console.log(the_index)
+		if(the_index == undefined){
+			return
+		}
+		old_color = colorScheme[data.nodes[the_index][6]]
+			if (old_color == undefined)
+				color.setHex(0xeeeeee)
+			else{
+				color.setHex("0x" + old_color.slice(1))
+			}
+				click_color = { r : color.r, g : color.g, b: color.b}
+		
 		changeNodeColor(the_index, click_color)
 		data.links.forEach(function(l){
 			if(l[0] == the_index){
+				old_color = colorScheme[data.nodes[l[1]][6]]
+				if (old_color == undefined)
+					color.setHex(0xeeeeee)
+				else{
+					color.setHex("0x" + old_color.slice(1))
+				}
+				click_color = { r : color.r, g : color.g, b: color.b}
 				changeNodeColor(l[1], click_color)
 			} 
 			if(l[1] == the_index){
+				old_color = colorScheme[data.nodes[l[0]][6]]
+				if (old_color == undefined)
+					color.setHex(0xeeeeee)
+				else{
+					color.setHex("0x" + old_color.slice(1))
+				}
+				click_color = { r : color.r, g : color.g, b: color.b}
 				changeNodeColor(l[0], click_color)
 			}
 			

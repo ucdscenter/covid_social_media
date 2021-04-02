@@ -64,7 +64,7 @@
       left : 20;
       top : 40;
       width: 200px;
-      max-height: 200px;
+      max-height: 80%;
       overflow-y: auto;
   }
 
@@ -76,8 +76,23 @@
       left : 20;
       top : 100;
       width: 200px;
-      max-height: 200px;
+      max-height: 80%;
       overflow-y: auto;
+  }
+  .hashtags-table-div{
+    position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 225;
+      top : 10;
+      width: 50%;
+      max-height: 150px;
+      overflow: auto;
+  }
+  .h-bars{
+    fill: #d3d3d3;
+  }
   }
  </style>
 {% endblock %}
@@ -113,6 +128,7 @@
     <div class="clicked-user-table">
       <p>User: <span id="user-tweet-selected"></span>: Total tweets <span id="user-tweet-count"></span></p>
     </div>
+    <div class='hashtags-table-div pt-1'><p>Top hashtags used:</p></div>
 
 	</div>
 </div>
