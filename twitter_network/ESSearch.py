@@ -12,7 +12,7 @@ class ESSearch:
             use_ssl=True,
             verify_certs=True,
             connection_class=RequestsHttpConnection,
-            timeout=60
+            timeout=200
         )
         self.es_index = es_index
 

@@ -1,9 +1,6 @@
 from pprint import pprint
 import nltk
-from gensim.utils import tokenize
-from gensim.models import FastText
-from gensim.test.utils import get_tmpfile
-from gensim.models import Word2Vec
+import igraph
 from .ESSearch import ESSearch
 from .s3_client import S3Client
 import preprocessor as p
@@ -14,7 +11,7 @@ from langdetect import detect
 import re
 from nltk.corpus import stopwords
 import string
-import igraph
+
 import json
 
 class TweetNetworkRunner:
@@ -99,17 +96,18 @@ class TweetNetworkRunner:
 				if source_i != target_i:
 					if self.graph.are_connected(source_i, target_i) == False:
 						self.graph.add_edges([(source_i, target_i)])
-
+		print("deleting links")
 		delete_ids = [v.index for v in self.graph.vs if v.degree() < 2]
 		highest_degree_ids = []
 		print(self.graph.vcount())
 		self.graph.delete_vertices(delete_ids)
 
 		delete_ids = [v.index for v in self.graph.vs if v.degree() < 1]
+		print("deleting second links")
 		self.graph.delete_vertices(delete_ids)
 		print("number retained nodes post link filtering")
 		print(self.graph.vcount())
-		
+		print("clustering")
 		self.graph = self.graph.clusters(mode='weak').giant()
 		print("number retained nodes post giant filtering")
 		print(self.graph.vcount())

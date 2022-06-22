@@ -160,8 +160,8 @@ async function wrapper(){
 		*/
 		scoreScale = d3.scaleLinear().domain([0, max_score]).range([1, 30])
 		popScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
-		xScale = d3.scaleLinear().domain(x_extent).range([-150, 150])
-		yScale = d3.scaleLinear().domain(y_extent).range([-150, 150])
+		xScale = d3.scaleLinear().domain(x_extent).range([-100, 100])
+		yScale = d3.scaleLinear().domain(y_extent).range([-70, 70])
 
 		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
 			var x = xScale(d[[4]])
