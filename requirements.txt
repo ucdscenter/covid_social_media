@@ -2,7 +2,7 @@ Django==3.0.4
 psycopg2-binary==2.8.4
 elasticsearch==7.6.0
 requests-aws4auth==0.9
-nltk==3.4.5
+nltk==3.6.6
 gensim==3.8.1
 tweet-preprocessor==0.5.0
 langdetect==1.0.8

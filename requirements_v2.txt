@@ -14,7 +14,7 @@ jmespath==1.0.1
 joblib==1.1.0
 langdetect==1.0.9
 llvmlite==0.38.1
-nltk==3.7
+nltk==3.6.6
 numba==0.55.2
 numpy==1.22.4
 pynndescent==0.5.7
