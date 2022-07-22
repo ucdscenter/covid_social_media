@@ -1,0 +1,190 @@
+{% extends 'twitter_network/base.html' %}
+{% block extra_style %}
+<style>
+ 	.i_obj_rect{
+ 		fill : steelblue;
+ 		opacity: .1;
+ 	}
+ 	.i_obj_rect:hover{
+ 		opacity: .5;
+ 	}
+ 	.obj-mouseover {
+      position : absolute;
+      background-color: white;
+      width : 100px;
+      z-index : 1000000;
+      font-size: 8px;
+    }
+    .mousep {
+    	margin-bottom:0px;
+    }
+  .timeline-abs{
+      position : absolute;
+      background-color: white;
+      width : 500px;
+      height : 100px;
+      z-index : 1000000;
+      font-size: 8px;
+      left : 50;
+      top : 50;
+  }
+
+  .labels-abs{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 8px;
+      left : 90;
+      top : 170;
+  }
+  .clicked-user-table{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 8px;
+      right : 50;
+      top : 10;
+      width: 250;
+      max-height: 500px;
+      overflow-y: auto
+  }
+  .search-user{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 10;
+  }
+    .links-table-div{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 40;
+      width: 200px;
+      max-height: 80%;
+      overflow-y: auto;
+  }
+
+  .centrality-table-div{
+    position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20;
+      top : 100;
+      width: 200px;
+      max-height: 80%;
+      overflow-y: auto;
+  }
+  .hashtags-table-div{
+    position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 225;
+      top : 10;
+      width: 50%;
+      max-height: 150px;
+      overflow: auto;
+  }
+  .h-bars{
+    fill: #d3d3d3;
+  }
+  }
+ </style>
+{% endblock %}
+{% block content %}
+<div class="obj-mouseover hidden">
+    <p class="name mousep p-1">hi there</p>
+    <p class="count mousep p-1">hi there</p>
+ </div>
+<h3>
+	<span id="identifier">{{ info }}</span> network graph: <span id="found-count"></span>
+</h3>
+
+<div class="row"> 
+	<div class="col-12 align-middle" id="loading-div" align="center" style="height: 100%">
+			<h5><span class="loading-message"></span></h5>	
+			 <img src="/static/twitter_network/images/big-ajax-loader.gif">
+	</div>
+	<div class="col-12 hidden" id="vis-div">
+    <div class="timeline-abs hidden">
+    </div>
+    <div class="labels-abs hidden">
+    </div>
+    <div class="search-user">
+       <input placeholder="search for username" type="text" id="user_search">
+    </div>
+    <div class="links-table-div">
+       <p class="empty_label">Linked users: <span id="link-counts"></span><p>
+    </div>
+    <div class="centrality-table-div">
+      <p>Networks' most central nodes<p>
+      <p>User, betweenness, degree<p>
+    </div>
+    <div class="clicked-user-table">
+      <p>User: <span id="user-tweet-selected"></span>: Total tweets <span id="user-tweet-count"></span></p>
+    </div>
+    <div class='hashtags-table-div pt-1'><p>Top hashtags used:</p></div>
+
+	</div>
+</div>
+
+
+
+{% endblock %}
+
+
+{% block javascript %}
+<script src="/static/twitter_network/js/d3.min.js"></script>
+<script src="/static/twitter_network/js/crossfilter.js"></script>
+<script src="/static/twitter_network/js/dc.min.js"></script>
+<script src="/static/twitter_network/js/three.min.js"></script>
+ <script src="https://unpkg.com/three@0.85.0/examples/js/controls/OrbitControls.js"></script>
+
+{% endblock %}
+
+{% block network_javascript %}
+    <script type="x-shader/x-vertex" id="vertexshader">
+
+      attribute float size;
+      attribute vec3 ca;
+
+      varying vec3 vColor;
+
+      void main() {
+
+        vColor = ca;
+
+        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+        gl_PointSize = size * ( 500.0 / -mvPosition.z );
+
+        gl_Position = projectionMatrix * mvPosition;
+
+      }
+
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentshader">
+
+      uniform vec3 color;
+      uniform sampler2D pointTexture;
+
+      varying vec3 vColor;
+
+      void main() {
+
+        gl_FragColor = vec4( color * vColor, 1.0 );
+
+        gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+
+        if ( gl_FragColor.a < ALPHATEST ) discard;
+
+      }
+    </script>
+<script src="/static/twitter_network/src/union_webgl_network.js"></script>
+{% endblock %}

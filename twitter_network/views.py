@@ -61,6 +61,19 @@ def webgl_network(request):
     context = { 'info' : identifier}
     return render(request, template, context)
 
+def union(request):
+    template = 'twitter_network/union_nav.html'
+    context = {}
+    return render(request, template, context)
+
+def webgl_network(request):
+    template = 'twitter_network/union_webgl_network.html'
+    identifier = request.GET.get('identifier')
+    print(identifier)
+    pregenerated = ['']
+    context = { 'info' : identifier}
+    return render(request, template, context)
+
 def get_query_count(request):
     keywords_to_search = request.GET.get('keywords_to_search')
     date_range = request.GET.get('daterange')

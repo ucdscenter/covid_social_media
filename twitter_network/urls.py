@@ -14,6 +14,8 @@ urlpatterns = [
    	path('show_webgl', views.show_webgl),
    	path('webgl_timeline', views.webgl_timeline),
     path('webgl_network', views.webgl_network),
+    path('union_webgl_network', views.webgl_network),
+    path('union', views.union),
     path('get_network_json', views.get_network_json),
    	path('get_tweet', views.get_tweet),
     path('get_user_tweets', views.get_user_tweets),
