@@ -66,7 +66,7 @@ def union(request):
     context = {}
     return render(request, template, context)
 
-def webgl_network(request):
+def union_webgl_network(request):
     template = 'twitter_network/union_webgl_network.html'
     identifier = request.GET.get('identifier')
     print(identifier)
