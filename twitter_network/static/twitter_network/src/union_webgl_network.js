@@ -299,7 +299,7 @@ async function wrapper(){
 		let tweetObj = data.nodes[tweet_i]
 		//let user_data = await d3.json("/twitter_network/get_user_tweets?usr=" + tweetObj[0] + "&start_d=" + data.info.start_date + "&end_d=" + data.info.end_date + '&qry=' + data.info.terms)
 		//console.log(user_data)
-		let user_data = tweetObj[7].split(" // ")
+		let user_data = tweetObj[7].split("///")
 		//d3.select("#user-tweet-count").text(user_data.hits.total)
 		d3.select("#user-tweet-count").text(user_data.length)
 		d3.select("#user-tweet-selected").text(tweetObj[0])
