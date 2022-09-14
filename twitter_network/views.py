@@ -66,6 +66,11 @@ def union(request):
     context = {}
     return render(request, template, context)
 
+def hydrox(request):
+    template = 'twitter_network/hydroxychloroquine_nav.html'
+    context = {}
+    return render(request, template, context)
+
 def union_webgl_network(request):
     template = 'twitter_network/union_webgl_network.html'
     identifier = request.GET.get('identifier')

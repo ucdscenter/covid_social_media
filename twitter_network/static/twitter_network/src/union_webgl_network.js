@@ -5,21 +5,28 @@ async function wrapper(){
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "_network_result.json"
 	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname + '&local=true')
-	console.log(data)
+
+
+	let dateParse = d3.timeParse("%Y-%m-%dT%H:%M:%S")
+	let dateFormat = d3.timeFormat("%d-%m-%Y")
+
 	console.log(d3.extent(data.nodes.map(function(d){
 		/*if(d[6] != 0){
 			console.log(d)
 		}*/
 		return d[6]
 	})))
+	data.nodes.forEach(function(n){
+		n[8] = n[8].split("///").map(x => dateParse(x.split('.')[0]))
+	})
 
+	console.log(data.nodes)
 	
 	var vertices = [];
 	let colors = [];
 
 	let formatter  = d3.format(".3s")  
-	let dateParse = d3.timeParse("%H-%d-%m-%Y")
-	let dateFormat = d3.timeFormat("%d-%m-%Y")
+
 
 	let scoreScale 
 	let popScale 
@@ -27,7 +34,6 @@ async function wrapper(){
 	let yScale 
 
 	let colorScheme = d3.schemePaired
-	console.log(colorScheme)
 	var circle
 	var sparkScaleX
 	let color = new THREE.Color()
@@ -172,7 +178,7 @@ async function wrapper(){
 		geometry.setAttribute( 'ca', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
 			let thecolor = colorScheme[d[6]]
 			if (thecolor == undefined)
-				color.setHex(0xff0000)
+				color.setHex(0xd3d3d3)
 			else{
 				color.setHex("0x" + thecolor.slice(1))
 			}
@@ -187,7 +193,7 @@ async function wrapper(){
 				console.log(d.p)
 				console.log(scalesize)
 			}*/
-			return [scoreScale(d[2])];
+			return [popScale(d[2])];
 		}).flat(), 1))
 
 
@@ -362,7 +368,7 @@ async function wrapper(){
 		let top_tags = []
 		let padding = {top : 10, bottom: 10, left : 50, right: 10}
 		let sparkheight = 80
-		let tagpadding = 100
+		let tagpadding = 60
 		let sparkwidth = tags_limit * tagpadding
 		Object.keys(data.info.hashtags).forEach(function(h){
 			top_tags.push([h, data.info.hashtags[h]])
@@ -439,7 +445,7 @@ async function wrapper(){
 		}
 		old_color = colorScheme[data.nodes[the_index][6]]
 			if (old_color == undefined)
-				color.setHex(0xeeeeee)
+				color.setHex(0xd3d3d3)
 			else{
 				color.setHex("0x" + old_color.slice(1))
 			}

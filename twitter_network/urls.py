@@ -6,9 +6,9 @@ app_name = 'twitter_network'
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('twitter_network_form', views.twitter_network_form),
+    #path('twitter_network_form', views.twitter_network_form),
     path('show_all_networks', views.show_all_networks),
-    path('create_network', views.create_network),
+    #path('create_network', views.create_network),
     path('show_network', views.show_twitter_network),
     path('show_ner', views.show_ner),
    	path('show_webgl', views.show_webgl),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('webgl_network', views.webgl_network),
     path('union_webgl_network', views.union_webgl_network),
     path('union', views.union),
+    path('hydroxychloroquine_project', views.hydrox),
     path('get_network_json', views.get_network_json),
    	path('get_tweet', views.get_tweet),
     path('get_user_tweets', views.get_user_tweets),
