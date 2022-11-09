@@ -10,17 +10,37 @@ async function wrapper(){
 	let dateParse = d3.timeParse("%Y-%m-%dT%H:%M:%S")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
 
-	console.log(d3.extent(data.nodes.map(function(d){
-		/*if(d[6] != 0){
-			console.log(d)
-		}*/
-		return d[6]
-	})))
+	console.log(data)
 	data.nodes.forEach(function(n){
 		n[8] = n[8].split("///").map(x => dateParse(x.split('.')[0]))
 	})
 
-	console.log(data.nodes)
+
+	Object.keys(data.info.hashtags).forEach(function(h){
+		data.info.hashtags[h] = { 'count' : data.info.hashtags[h], 'idxs' : []}
+	})
+
+	data.nodes.forEach(function(n, i){
+
+		let text = n[7].toLowerCase()
+		if(n[7].indexOf("#") > -1){
+			console.log(text)
+			Object.keys(data.info.hashtags).forEach(function(h){
+				if(text.indexOf( "#" + h.toLowerCase()) > -1){
+					// console.log(text)
+					// console.log(i)
+					//console.log(h)
+					data.info.hashtags[h].idxs.push(i)
+				}
+			})
+
+		}
+	})
+
+
+
+
+	
 	
 	var vertices = [];
 	let colors = [];
@@ -40,21 +60,47 @@ async function wrapper(){
 	let spreadMult = 100
 	var raycaster;
 	var threshold = 0.1;
+	
+
+	var circle_sprite = new THREE.TextureLoader().load(
+        "/static/twitter_network/images/disc.png"
+        )
+
+
+
+	var indices
+	var indices_dict = {};
+	var user_idx_dict;
+
+
+	var choose_points, choose_generated_points
+	  
+
+
+	var s_geometry = new THREE.BufferGeometry();
 	var geometry = new THREE.BufferGeometry();
-	var material = new THREE.ShaderMaterial( {
-					uniforms: {
-						color: { value: new THREE.Color( 0xffffff ) },
-						pointTexture: { value: new THREE.TextureLoader().load( "/static/twitter_network/images/disc.png" ) }
-					},
-					vertexShader: document.getElementById( 'vertexshader' ).textContent,
-					fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
 
-					alphaTest: 0.9
-		} );
+	var material = new THREE.PointsMaterial({
+            size: 15,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors,
+            map: circle_sprite,
+            transparent: true,
+        });
 
 
+	var s_material = new THREE.PointsMaterial({
+            size: 15,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors,
+            map: circle_sprite,
+            transparent: true,
+       });
 
-	var points = new THREE.Points( geometry, material );	
+	var s_points = new THREE.Points( s_geometry, s_material );
+
+	var points = new THREE.Points( geometry, material );
+	var interaction_points	
 
 	const linegeometry = new THREE.BufferGeometry()
 	const linematerial = new THREE.LineBasicMaterial({
@@ -71,13 +117,10 @@ async function wrapper(){
 		})
 
 	let top_100 = -2//c_objs[][1];
-	console.log(top_100)
 
 	const line = new THREE.LineSegments( linegeometry, linematerial );
 	const selpositions = new Float32Array( data.links.length * 3 )
-	/*const selpositions = new Float32Array([1, 1, 1, 1 , 1, 1, 1, 1, 1, 1, 1, 1].map(function(l){
-		return [100 * Math.random(), 100 * Math.random(), -1 ]
-	}).flat())*/
+
 
 	let sellinegeometry = new THREE.BufferGeometry()
 	sellinegeometry.setAttribute('position', new THREE.BufferAttribute( selpositions, 3 ) )
@@ -89,7 +132,6 @@ async function wrapper(){
 
  	var camera, scene, renderer;
 	var geometry, material, mesh;
-	var pointGeo
 	var controls
 	var outermousex, outermousey;
 	var textGroup = new THREE.Group()
@@ -109,13 +151,91 @@ async function wrapper(){
 	d3.select("#loading-div").classed("hidden", true)
 	d3.select("#vis-div").classed("hidden", false)
 
+	function addPoints(){
 
+		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
+			var x = xScale(d[[4]])
+			var y = yScale(d[5])
+			var z = 0//d.l[2] * spreadMult;
+			return [x,y,z]
+		}).flat(), 3 ));
+		geometry.setAttribute( 'color', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
+			let thecolor = colorScheme[d[6]]
+			if (thecolor == undefined)
+				color.setHex(0xd3d3d3)
+			else{
+				color.setHex("0x" + thecolor.slice(1))
+			}
+			return [color.r, color.g, color.b]
+		}).flat(), 3 ));
+		geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
+		geometry.setAttribute('size', new THREE.Float32BufferAttribute( data.nodes.map(function(d){
+			return [popScale(d[2])];
+		}).flat(), 1))
+
+		console.log(geometry)
+		geometry.computeBoundingSphere();
+	    scene.add(points);
+	    interaction_points = points;
+	    user_idx_dict = indices_dict;
+
+	}
+
+	var filter_idx_dict = {};
+
+	function addPointsSubset(dd){
+		s_geometry = new THREE.BufferGeometry();
+		s_points = new THREE.Points( s_geometry, s_material );
+		let ids = dd[1].idxs;
+		let filt_idx = 0;
+		let filt_data = data.nodes.filter(function(d, i){
+			if(i == ids[filt_idx]){
+				filt_idx++;
+				return true;
+			}
+			else{
+				return false;
+			}
+		})	
+
+		let filt_indices = new Uint16Array( filt_data.length )
+
+		ids.forEach(function(d, i){
+			filt_indices[i] = i
+			filter_idx_dict[i] = d
+		})
+		console.log(filt_data.length)
+		s_geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(filt_data.map(function(d1){
+			var x = xScale(d1[[4]])
+			var y = yScale(d1[5])
+			var z = 0//d.l[2] * spreadMult;
+			return [x,y,z];
+		}).flat(), 3 ));
+		s_geometry.setAttribute( 'color', new THREE.Float32BufferAttribute(filt_data.map(function(d){
+			let thecolor = colorScheme[d[6]]
+			if (thecolor == undefined)
+				color.setHex(0xd3d3d3)
+			else{
+				color.setHex("0x" + thecolor.slice(1))
+			}
+			return [color.r, color.g, color.b]
+		}).flat(), 3 ));
+		s_geometry.setIndex( new THREE.BufferAttribute( filt_indices, 1 ) );
+		s_geometry.setAttribute('size', new THREE.Float32BufferAttribute( filt_data.map(function(d){
+			return [popScale(d[2])];
+		}).flat(), 1))
+
+		s_geometry.computeBoundingSphere();
+	    scene.add(s_points);
+	    interaction_points = s_points;
+	    user_idx_dict = filter_idx_dict
+	}
 	
 
  
 	function init() {
 
-		var indices = new Uint16Array( data.nodes.length );
+		indices = new Uint16Array( data.nodes.length );
 		var k = 0;
 		let max_pop = -1
 		let max_score = -1
@@ -123,6 +243,7 @@ async function wrapper(){
 		let y_extent = [100, -100]
 		for ( var i = 0; i < data.nodes.length; i ++ ){
 			indices[ i ] = i;
+			indices_dict[i] = i
 			/*if (dateParse(data.data[i].d).getTime() < timeExt[0].getTime()){
 					timeExt[0] = dateParse(data.data[i].d)
 			}
@@ -168,37 +289,8 @@ async function wrapper(){
 		popScale = d3.scaleLinear().domain([0, max_pop]).range([1, 30])
 		xScale = d3.scaleLinear().domain(x_extent).range([-100, 100])
 		yScale = d3.scaleLinear().domain(y_extent).range([-70, 70])
-
-		geometry.setAttribute( 'position', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
-			var x = xScale(d[[4]])
-			var y = yScale(d[5])
-			var z = 0//d.l[2] * spreadMult;
-			return [x,y,z]
-		}).flat(), 3 ));
-		geometry.setAttribute( 'ca', new THREE.Float32BufferAttribute(data.nodes.map(function(d){
-			let thecolor = colorScheme[d[6]]
-			if (thecolor == undefined)
-				color.setHex(0xd3d3d3)
-			else{
-				color.setHex("0x" + thecolor.slice(1))
-			}
-			return [color.r, color.g, color.b]
-		}).flat(), 3 ));
-		geometry.setIndex( new THREE.BufferAttribute( indices, 1 ) );
-		geometry.setAttribute('size', new THREE.Float32BufferAttribute( data.nodes.map(function(d){
-			
-			/*var scalesize = (d.p / max_pop) 
-			if (scalesize > 1){
-				console.log(max_pop)
-				console.log(d.p)
-				console.log(scalesize)
-			}*/
-			return [popScale(d[2])];
-		}).flat(), 1))
-
-
-		geometry.computeBoundingSphere();
- 
+		scene = new THREE.Scene();
+ 		addPoints()
 	    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, .1, 2000 );
 	  
 		camera.position.set(0, 0, 300)
@@ -210,12 +302,13 @@ async function wrapper(){
 				Points: { threshold: 1 },
 				Sprite: {}
 			};
+
 		mouse = new THREE.Vector2();
 
-	    scene = new THREE.Scene();
+
 	    scene.background = new THREE.Color('white');
 	    camera.lookAt(scene.position);
-	 	scene.add(points);
+	 	
 
 
 	 	
@@ -224,31 +317,13 @@ async function wrapper(){
 
 	
 	data.links.forEach(function(l){
-
-		//if(data.info.top_centrality[l[0]] != undefined && data.info.top_centrality[l[0]].b >= top_100){
 			line_points.push(xScale(data.nodes[l[0]][4]))
 			line_points.push(yScale(data.nodes[l[0]][5]))
 			line_points.push(-.1)
 			line_points.push(xScale(data.nodes[l[1]][4]))
 			line_points.push(yScale(data.nodes[l[1]][5]))
 			line_points.push(-.1)
-		/*}
-		else if(data.info.top_centrality[l[1]] != undefined && data.info.top_centrality[l[1]].b >= top_100){
-			line_points.push(xScale(data.nodes[l[0]][4]))
-			line_points.push(yScale(data.nodes[l[0]][5]))
-			line_points.push(-.1)
-			line_points.push(xScale(data.nodes[l[1]][4]))
-			line_points.push(yScale(data.nodes[l[1]][5]))
-			line_points.push(-.1)
-		}
-		else {
-			removed_count++
-		}
-		*/
 	})
-	console.log(removed_count)
-	console.log(data.links.length)
-	console.log(line_points);
 
 	const line_vertices = new Float32Array(line_points)
 	
@@ -289,7 +364,6 @@ async function wrapper(){
 					console.log(index)
 					highlightUser()
 				})
-		console.log(c_objs)
 	}
 	createCentralityTable()
 
@@ -337,7 +411,7 @@ async function wrapper(){
 		
 		data.nodes.forEach(function(n){
 			if(n[0].toLowerCase() == user.toLowerCase()){
-				index = nodecount;
+				index = user_idx_dict[nodecount];
 				console.log(user)
 				highlightUser()
 				return
@@ -350,12 +424,10 @@ async function wrapper(){
 
 
 	function addToLinkTable(the_index){
-
-
 		d3.select(".links-table-div").append("a")
 			.attr("class", "links-element").style("background-color", colorScheme[data.nodes[the_index][6]]).text(data.nodes[the_index][0] + " " + data.nodes[the_index][2])
 			.on("click", function(){
-				index = the_index;
+				index = user_idx_dict[the_index];
 				highlightUser()
 			})
 		d3.select(".links-table-div").append("hr").attr("class", "links-element")
@@ -374,18 +446,18 @@ async function wrapper(){
 			top_tags.push([h, data.info.hashtags[h]])
 		})
 		top_tags.sort(function(a,b){
-			return b[1] - a[1];
+			return b[1].count - a[1].count;
 		})
 		top_tags = top_tags.slice(0, tags_limit)
 		console.log(top_tags)
 
 		let hashtags_svg = d3.select('.hashtags-table-div').append("svg").attr("id", "hashtags-svg").attr("height", 80).attr("width", sparkwidth)
 
-		let hextent = [0, top_tags[0][1]]
+		let hextent = [0, top_tags[0][1].count]
 		var i = -1
 		let htagsscale = d3.scaleBand().domain(top_tags.map(function(h){ return h[0]})).range([0, sparkwidth - padding.left - padding.right])
 		let hheightscale = d3.scaleLinear().domain(hextent).range([sparkheight - (padding.top + padding.bottom), padding.bottom])
-		console.log(htagsscale(top_tags[0][1]))
+		console.log(top_tags)
 
 		hashtags_svg.append("g")
       		.attr("transform", "translate(" + padding.left + "," + (sparkheight  - (padding.top + padding.bottom)) + ")")
@@ -407,26 +479,61 @@ async function wrapper(){
 	    		return htagsscale(d[0])
 	    	})
 	    	.attr("y", function(d){
-	    		return hheightscale(d[1])
+
+	    		return hheightscale(d[1].count)
 	    	})
 	    	.attr("width", htagsscale.bandwidth() - 15)
 	    	.attr("height", function(d){
-	    		return (sparkheight - padding.top - padding.bottom) - hheightscale(d[1])
+	    		return (sparkheight - padding.top - padding.bottom) - hheightscale(d[1].count)
+	    	})
+	    	.on("click", function(d){
+	    		highlightTag(d, this)	
 	    	})
 
 	}
 	addHashtagstoTable()
 
+
+	let selectedTag = undefined;
+
+	function highlightTag(d, ref_el){
+		if(selectedTag == ref_el){
+			unhighlightTag(ref_el)
+			return;
+		}
+		if(selectedTag != undefined){
+			unhighlightTag(selectedTag);			
+		}
+		d3.select(ref_el).classed("selected-bar", true)
+		d3.select(ref_el).classed("h-bars", false)
+		console.log(d)
+		material.visible = false
+		material.needsUpdate = true
+		selectedTag = ref_el
+		addPointsSubset(d);
+	}
+
+
+	function unhighlightTag(ref_el){
+		d3.select(ref_el).classed("selected-bar", false);
+		d3.select(ref_el).classed("h-bars", true)
+		material.visible = true;
+		material.needsUpdate = true
+		selectedTag = undefined
+		scene.remove(s_points);
+		interaction_points = points;
+		user_idx_dict = indices_dict;
+	}
+
 	function changeNodeColor(the_index, new_color){
 		//console.log(data.nodes[the_index])
 		let saved_color = {}
-		saved_color.r = points.geometry.attributes.ca.array[the_index * 3]
-		saved_color.g = points.geometry.attributes.ca.array[(the_index * 3) + 1]
-		saved_color.b = points.geometry.attributes.ca.array[(the_index * 3) + 2]
-		points.geometry.attributes.ca.array[the_index * 3] = new_color.r
-		points.geometry.attributes.ca.array[(the_index * 3) + 1] = new_color.g
-		points.geometry.attributes.ca.array[(the_index * 3) + 2] = new_color.b
-
+		saved_color.r = interaction_points.geometry.attributes.color.array[the_index * 3]
+		saved_color.g = interaction_points.geometry.attributes.color.array[(the_index * 3) + 1]
+		saved_color.b = interaction_points.geometry.attributes.color.array[(the_index * 3) + 2]
+		interaction_points.geometry.attributes.color.array[the_index * 3] = new_color.r
+		interaction_points.geometry.attributes.color.array[(the_index * 3) + 1] = new_color.g
+		interaction_points.geometry.attributes.color.array[(the_index * 3) + 2] = new_color.b
 		return saved_color
 	}
 
@@ -525,7 +632,7 @@ async function wrapper(){
 		selline.geometry.computeBoundingSphere();
 		selline.geometry.setDrawRange( 0, linkfound * 2);
 		selline.geometry.attributes.position.needsUpdate = true;
-		points.geometry.attributes.ca.needsUpdate = true;
+		points.geometry.attributes.color.needsUpdate = true;
 		render()
   		controls.update();
 	}
@@ -534,7 +641,7 @@ async function wrapper(){
 		unlightUser(clicked_index)
 
 
-		clicked_index = index;
+		clicked_index = user_idx_dict[index];
 		if(index != undefined){
 			console.log(clicked_index)
 			$('#user_search').val(data.nodes[clicked_index][0])
@@ -558,26 +665,27 @@ async function wrapper(){
 	var clicked_index = undefined;
 	var oldr, oldg, oldb;
 	var fetchdoc
+	var rv_index = undefined;
 	function update() {
 		raycaster.setFromCamera( mouse, camera );
-		var intersects = raycaster.intersectObjects( [ points ] );
+		var intersects = raycaster.intersectObjects( [ interaction_points ] );
 		fetchdoc = false
 
 		if (intersects[0] != undefined){
 			//console.log(intersects[0])
-			if (intersects[0].index != index){
+			if (user_idx_dict[intersects[0].index] != index){
 
-				points.geometry.attributes.ca.array[index * 3] = oldr
-				points.geometry.attributes.ca.array[(index * 3) + 1] = oldg
-				points.geometry.attributes.ca.array[(index * 3) + 2] = oldb
+				interaction_points.geometry.attributes.color.array[index * 3] = oldr
+				interaction_points.geometry.attributes.color.array[(index * 3) + 1] = oldg
+				interaction_points.geometry.attributes.color.array[(index * 3) + 2] = oldb
 
-				index = intersects[ 0 ].index
-				oldr = points.geometry.attributes.ca.array[index * 3]
-				oldg = points.geometry.attributes.ca.array[(index * 3) + 1]
-				oldb = points.geometry.attributes.ca.array[(index * 3) + 2]
-				points.geometry.attributes.ca.array[index * 3] = 0
-				points.geometry.attributes.ca.array[(index * 3) + 1] = 0
-				points.geometry.attributes.ca.array[(index * 3) + 2] = 0
+				index = intersects[ 0 ].index;
+				oldr = interaction_points.geometry.attributes.color.array[index * 3]
+				oldg = interaction_points.geometry.attributes.color.array[(index * 3) + 1]
+				oldb = interaction_points.geometry.attributes.color.array[(index * 3) + 2]
+				interaction_points.geometry.attributes.color.array[index * 3] = 0
+				interaction_points.geometry.attributes.color.array[(index * 3) + 1] = 0
+				interaction_points.geometry.attributes.color.array[(index * 3) + 2] = 0
 				fetchdoc = true
 			}
 			
@@ -585,9 +693,9 @@ async function wrapper(){
 		else{
 			if (index != undefined){
 				if(index != clicked_index){
-				points.geometry.attributes.ca.array[index * 3] = oldr
-				points.geometry.attributes.ca.array[(index * 3) + 1] = oldg
-				points.geometry.attributes.ca.array[(index * 3) + 2] = oldb
+				interaction_points.geometry.attributes.color.array[index * 3] = oldr
+				interaction_points.geometry.attributes.color.array[(index * 3) + 1] = oldg
+				interaction_points.geometry.attributes.color.array[(index * 3) + 2] = oldb
 				}
 			}
 			index = undefined
@@ -596,7 +704,7 @@ async function wrapper(){
 			
 		}
 		if(fetchdoc){
-			getTweet(data.nodes[index]);
+			getTweet(data.nodes[user_idx_dict[index]]);
 			/*
 			if(data.data[index].c != -1){
 				d3.selectAll('.line').classed("hidden", true)
@@ -605,15 +713,15 @@ async function wrapper(){
 
 			}*/
 		}
-		points.geometry.attributes.ca.needsUpdate = true
+		interaction_points.geometry.attributes.color.needsUpdate = true
   		controls.update();
-	}
+
+
+	}//update
 
 	function render() {
   		renderer.render(scene, camera);
-	}
+	}//render
 	
-
-
-}
+}//wrapper
 wrapper()
