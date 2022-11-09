@@ -5,7 +5,7 @@ async function wrapper(){
 	let height = window.innerHeight;
 	let fname = d3.select("#identifier").text() + "_network_result.json"
 	let data =  await d3.json("/twitter_network/get_network_json?model_json=" + fname + '&local=true')
-
+	console.log("whatsup", data);
 
 	let dateParse = d3.timeParse("%Y-%m-%dT%H:%M:%S")
 	let dateFormat = d3.timeFormat("%d-%m-%Y")
@@ -361,7 +361,7 @@ async function wrapper(){
 		d3.select(".links-table-div").append("hr").attr("class", "links-element")
 	}
 
-
+	// hashtags table graph
 	function addHashtagstoTable(){
 		console.log(data.info.hashtags)
 		let tags_limit = 20
@@ -416,6 +416,75 @@ async function wrapper(){
 
 	}
 	addHashtagstoTable()
+
+	function barChartWithTimesForTweets(){
+		var svg = d3.select("svg"),
+        margin = 200,
+        width = svg.attr("width") - margin,
+        height = svg.attr("height") - margin;
+
+
+    	var xScale = d3.scaleBand().range ([0, width]).padding(0.4),
+        yScale = d3.scaleLinear().range ([height, 0]);
+
+    	var g = svg.append("g")
+               .attr("transform", "translate(" + 100 + "," + 100 + ")");
+		
+		// load data in a data structure
+		let dict = {}
+		data.nodes.forEach(function(dataNode){
+			// console.log("gaga", dataNode);
+			const hour = dataNode[8][0].getHours();
+			// console.log(hour);
+			if(!(hour in dict)){
+				dict[hour] = 0;
+				dict[hour] += 1;
+			}
+			else{
+				dict[hour] += 1;
+			}
+		});
+
+		console.log(dict);
+		let valuesForBarChart = []; 
+		Object.keys(dict).forEach(function(numHour){
+			valuesForBarChart.push([numHour, dict[numHour]])
+		})
+		console.log(valuesForBarChart);
+
+		xScale.domain(valuesForBarChart.map(function(data) { return data[0]; }));
+        yScale.domain([0, 1000]);
+
+		g.append("g")
+         .attr("transform", "translate(0," + height + ")")
+         .call(d3.axisBottom(xScale));
+
+        g.append("g")
+         .call(d3.axisLeft(yScale).tickFormat(function(d){
+             return d;
+         }).ticks(10))
+         .append("text")
+         .attr("y", 6)
+         .attr("dy", "0.71em")
+         .attr("text-anchor", "end")
+         .text("value");
+
+		 g.selectAll(".bar")
+         .data(valuesForBarChart)
+         .enter()
+		 .append("rect")
+         .attr("class", "bar")
+         .attr("x", function(d) { 
+			// console.log("skjvnj", d);
+			return xScale(d[0]); })
+         .attr("y", function(d) { 
+			// console.log("vdbdf", d);
+			return yScale(d[1]); })
+         .attr("width", xScale.bandwidth())
+         .attr("height", function(d) { return height - yScale(d[1]); });
+
+	}
+	barChartWithTimesForTweets();
 
 	function changeNodeColor(the_index, new_color){
 		//console.log(data.nodes[the_index])

@@ -26,7 +26,7 @@ SECRET_KEY = 'm5w7c8+m0ci%3sv!x9s310q+=-+&7$9jxt^=y6rlu4o%8&a+$g'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['18.220.153.28', 'localhost']
+ALLOWED_HOSTS = ['18.220.153.28', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -75,10 +75,26 @@ WSGI_APPLICATION = 'socialmedia_networks.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = database_info
+# DATABASES = database_info
 # master_username = postgres
 # dev_db_pw = veryhardpassword!
 # name = social_media_dev
+
+database_info = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
+        'TEST': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': 'db.sqlite3',
+        },
+    }
+}
+AWS_PROFILE = {
+    'ACCESS_KEY': 'xxxx',
+    'SECRET_KEY': 'xxxx',
+    'AWS_HOST': 'search-mellon-team-02-loxyxjaof7ypdgvufsulhomyuq.us-east-2.es.amazonaws.com'
+}
 
 
 # Password validation
