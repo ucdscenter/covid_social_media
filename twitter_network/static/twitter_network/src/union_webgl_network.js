@@ -12,7 +12,7 @@ async function wrapper(){
 
 	console.log(data)
 	data.nodes.forEach(function(n){
-		n[8] = n[8].split("///").map(x => dateParse(x.split('.')[0]))
+		n[8] = n[8].map(x => dateParse(x.split('.')[0]))
 	})
 
 
@@ -20,7 +20,7 @@ async function wrapper(){
 		data.info.hashtags[h] = { 'count' : data.info.hashtags[h], 'idxs' : []}
 	})
 
-	data.nodes.forEach(function(n, i){
+	/*data.nodes.forEach(function(n, i){
 
 		let text = n[7].toLowerCase()
 		if(n[7].indexOf("#") > -1){
@@ -35,7 +35,7 @@ async function wrapper(){
 			})
 
 		}
-	})
+	})*/
 
 
 
@@ -379,7 +379,7 @@ async function wrapper(){
 		let tweetObj = data.nodes[tweet_i]
 		//let user_data = await d3.json("/twitter_network/get_user_tweets?usr=" + tweetObj[0] + "&start_d=" + data.info.start_date + "&end_d=" + data.info.end_date + '&qry=' + data.info.terms)
 		//console.log(user_data)
-		let user_data = tweetObj[7].split("///")
+		let user_data = tweetObj[7]
 		//d3.select("#user-tweet-count").text(user_data.hits.total)
 		d3.select("#user-tweet-count").text(user_data.length)
 		d3.select("#user-tweet-selected").text(tweetObj[0])

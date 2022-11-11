@@ -53,7 +53,7 @@
       background-color: white;
       z-index : 1000000;
       font-size: 15px;
-      left : 20;
+      left : 1vh;
       top : 10;
   }
     .links-table-div{
@@ -61,32 +61,48 @@
       background-color: white;
       z-index : 1000000;
       font-size: 15px;
-      left : 20;
-      top : 40;
-      width: 200px;
-      max-height: 80%;
+      left : 1vw;
+      top : 10vh;
+      width: 15vw;
+      max-width: 150;
+      max-height: 80vh;
       overflow-y: auto;
   }
 
   .centrality-table-div{
-    position : absolute;
+      position : absolute;
       background-color: white;
       z-index : 1000000;
       font-size: 15px;
-      left : 20;
-      top : 100;
-      width: 200px;
-      max-height: 80%;
+      left : 1vw;
+      top : 10vh;
+      width: 15vw;
+      max-width: 200;
+      max-height: 80vh;
       overflow-y: auto;
   }
   .hashtags-table-div{
+      position : absolute;
+      background-color: white;
+      z-index : 1000000;
+      font-size: 15px;
+      left : 20vw;
+      top : 10;
+      width: 25vw;
+      max-width: 400px;
+      max-height: 150px;
+      overflow: auto;
+  }
+
+  .timeline-table-div{
     position : absolute;
       background-color: white;
       z-index : 1000000;
       font-size: 15px;
-      left : 225;
+      left : 50vw;
       top : 10;
-      width: 25%;
+      width: 25vw;
+      max-width: 400px;
       max-height: 150px;
       overflow: auto;
   }
@@ -132,6 +148,9 @@
       <p>User: <span id="user-tweet-selected"></span>: Total tweets <span id="user-tweet-count"></span></p>
     </div>
     <div class='hashtags-table-div pt-1'><p>Top hashtags used:</p></div>
+
+    <div class='timeline-table-div pt-1'><p>Timeline of Tweets:</p>
+    </div>
 
 	</div>
 </div>
