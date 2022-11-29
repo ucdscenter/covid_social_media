@@ -20,22 +20,18 @@ async function wrapper(){
 		data.info.hashtags[h] = { 'count' : data.info.hashtags[h], 'idxs' : []}
 	})
 
-	/*data.nodes.forEach(function(n, i){
-
-		let text = n[7].toLowerCase()
-		if(n[7].indexOf("#") > -1){
-			console.log(text)
-			Object.keys(data.info.hashtags).forEach(function(h){
-				if(text.indexOf( "#" + h.toLowerCase()) > -1){
-					// console.log(text)
-					// console.log(i)
-					//console.log(h)
-					data.info.hashtags[h].idxs.push(i)
-				}
+	data.nodes.forEach(function(n, i){
+		let tags = n[9]
+		tags.forEach(function(t){
+			t.forEach(function(h){
+				console.log(h.tag)
+				data.info.hashtags[h.tag].idxs.push(i)
 			})
 
-		}
-	})*/
+		})
+	})
+
+	console.log(data.info)
 
 
 
@@ -184,10 +180,15 @@ async function wrapper(){
 	var filter_idx_dict = {};
 
 	function addPointsSubset(dd){
+
 		s_geometry = new THREE.BufferGeometry();
 		s_points = new THREE.Points( s_geometry, s_material );
 		let ids = dd[1].idxs;
 		let filt_idx = 0;
+		let idx_set = new Set(ids);
+
+		ids = [...idx_set]
+
 		let filt_data = data.nodes.filter(function(d, i){
 			if(i == ids[filt_idx]){
 				filt_idx++;
@@ -196,7 +197,7 @@ async function wrapper(){
 			else{
 				return false;
 			}
-		})	
+		})
 
 		let filt_indices = new Uint16Array( filt_data.length )
 
