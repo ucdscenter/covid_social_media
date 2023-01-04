@@ -1,0 +1,15 @@
+{% extends 'twitter_network/base.html' %}
+
+{% block content %}
+<div class="row">
+	<div class="col-2"></div>
+	<div class="col-8">
+		<h1>Covid Networks</h1>
+<h6><a href="/twitter_network/webgl_network?identifier=facemask_OR_face_maskfastgreedy">view Facemask Network</a></h6>
+<h6><a href="/twitter_network/webgl_network?identifier=vaccinefastgreedy">view Vaccine Network</a></h6>
+<h6><a href="/twitter_network/webgl_network?identifier=hand_AND_wash_OR_hands_AND_washfastgreedy">view Hand Wash Network</a></h6>
+<h6><a href="/twitter_network/webgl_network?identifier=fastgreedy">view 1 million Sample</a></h6>
+<h6><a href="/twitter_network/webgl_network?identifier=hydroxychloroquinefastgreedy">view Hydroxychloroquine</a></h6>
+	</div>
+</div>
+{% endblock %}
